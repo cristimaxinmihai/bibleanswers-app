@@ -529,26 +529,33 @@
             return getTrialDaysElapsed() >= TRIAL_DAYS;
         }
 
-        function checkAccessState() {
-            const chatBox = document.getElementById('aiChatBox');
-            const paywallBox = document.getElementById('paywallBox');
-            if (isTrialExpired()) {
-                chatBox.style.display = 'none';
-                paywallBox.style.display = 'block';
-                // Occasionally show the discounted promo (about 1 in 3 visits)
-                if (Math.random() < 0.33) {
-                    document.getElementById('promoBanner').style.display = 'block';
-                }
-            } else {
-                chatBox.style.display = 'block';
-                paywallBox.style.display = 'none';
-            }
+function checkAccessState() {
+    const chatBox = document.getElementById('aiChatBox');
+    const paywallBox = document.getElementById('paywallBox');
+    const isSubscribed = localStorage.getItem('subscriptionActive') === 'true';
+    if (isTrialExpired() && !isSubscribed) {
+        chatBox.style.display = 'none';
+        paywallBox.style.display = 'block';
+        // Occasionally show the discounted promo (about 1 in 3 visits)
+        if (Math.random() < 0.33) {
+            document.getElementById('promoBanner').style.display = 'block';
         }
+    } else {
+        chatBox.style.display = 'block';
+        paywallBox.style.display = 'none';
+    }
+}
+      function handleSubscribe(plan) {
+    // TEST: simulare checkout, până conectăm Stripe/Apple IAP
+    const confirmed = confirm('TEST CHECKOUT\n\nSimulăm o plată reușită pentru planul "' + plan + '".\n\nContinuăm?');
+    if (!confirmed) return;
 
-        function handleSubscribe(plan) {
-            // Placeholder until real payment processing (Stripe / Apple In-App Purchase) is connected.
-            alert('Subscription checkout coming soon for the ' + plan + ' plan. Payment processing is not yet connected.');
-        }
+    localStorage.setItem('subscriptionActive', 'true');
+    localStorage.setItem('subscriptionPlan', plan);
+
+    alert('✅ Plată simulată cu succes! Ai acces complet la BibleAnswers AI.');
+    checkAccessState();
+}
 
         function getUsageState() {
             const today = new Date().toISOString().slice(0, 10);
