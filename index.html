@@ -308,6 +308,9 @@
         <p class="hero-subtitle">Find peace, answers, and support through God's Word.</p>
 
         <div id="aiChatBox" style="background:#fff;border:1px solid var(--border-color);border-radius:14px;padding:20px;margin-bottom:50px;text-align:left;">
+            <div style="display:flex;justify-content:flex-end;margin-bottom:8px;">
+                <button onclick="clearAiChat()" style="background:none;border:none;color:var(--accent-color);font-size:13px;cursor:pointer;text-decoration:underline;padding:0;">Clear</button>
+            </div>
             <div id="aiMessages" style="max-height:320px;overflow-y:auto;margin-bottom:14px;"></div>
             <div style="display:flex;gap:8px;">
                 <input type="text" id="aiInput" placeholder="Ask any Bible question..." style="flex:1;border:1px solid #ddd;border-radius:24px;padding:10px 16px;font-size:14.5px;outline:none;" onkeydown="if(event.key==='Enter') sendAiQuestion()">
@@ -474,6 +477,11 @@
 
         // ---- AI CHAT (calls our secure backend, never exposes any API key) ----
         let aiConversation = [];
+
+        function clearAiChat() {
+            aiConversation = [];
+            document.getElementById('aiMessages').innerHTML = '';
+        }
 
         function formatAiText(text) {
             let safe = text
