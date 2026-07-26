@@ -289,7 +289,7 @@
 
     <header>
         <div class="header-left">
-            <a href="#" class="back-btn">&larr; Back</a>
+            <a href="#" class="back-btn" onclick="event.preventDefault(); window.scrollTo({ top: 0, behavior: 'smooth' });">&larr; Back</a>
             <div class="logo">📖 BibleAnswers</div>
         </div>
         <div class="header-center">
@@ -307,14 +307,13 @@
         <h1 class="hero-title">Grow Your Faith Daily</h1>
         <p class="hero-subtitle">Find peace, answers, and support through God's Word.</p>
 
-        <div class="search-box">
-            <input type="text" id="searchInput" placeholder="Search any Bible question..." onkeydown="if(event.key === 'Enter') handleSearch()">
-            <button onclick="handleSearch()">→</button>
-        </div>
-
-        <div class="active-filter" id="activeFilter">
-            Showing results for "<span id="activeFilterText"></span>"
-            <button onclick="clearFilter()">Clear</button>
+        <div id="aiChatBox" style="background:#fff;border:1px solid var(--border-color);border-radius:14px;padding:20px;margin-bottom:50px;text-align:left;">
+            <div id="aiMessages" style="max-height:320px;overflow-y:auto;margin-bottom:14px;"></div>
+            <div style="display:flex;gap:8px;">
+                <input type="text" id="aiInput" placeholder="Ask any Bible question..." style="flex:1;border:1px solid #ddd;border-radius:24px;padding:10px 16px;font-size:14.5px;outline:none;" onkeydown="if(event.key==='Enter') sendAiQuestion()">
+                <button onclick="sendAiQuestion()" style="background:var(--accent-color);color:#fff;border:none;border-radius:50%;width:40px;height:40px;font-size:16px;cursor:pointer;flex-shrink:0;">→</button>
+            </div>
+            <p style="color:#999;font-size:12px;margin-top:10px;margin-bottom:0;">AI-generated answers. Please weigh them against Scripture and pastoral guidance.</p>
         </div>
 
         <div class="section-title">Explore Topics</div>
@@ -339,16 +338,6 @@
                 <div class="topic-icon">📚</div>
                 <div class="topic-name">Study</div>
             </div>
-        </div>
-
-        <div class="section-title">Ask BibleAnswers AI</div>
-        <div id="aiChatBox" style="background:#fff;border:1px solid var(--border-color);border-radius:14px;padding:20px;margin-bottom:50px;text-align:left;">
-            <div id="aiMessages" style="max-height:320px;overflow-y:auto;margin-bottom:14px;"></div>
-            <div style="display:flex;gap:8px;">
-                <input type="text" id="aiInput" placeholder="Ask any Bible question..." style="flex:1;border:1px solid #ddd;border-radius:24px;padding:10px 16px;font-size:14.5px;outline:none;" onkeydown="if(event.key==='Enter') sendAiQuestion()">
-                <button onclick="sendAiQuestion()" style="background:var(--accent-color);color:#fff;border:none;border-radius:50%;width:40px;height:40px;font-size:16px;cursor:pointer;flex-shrink:0;">→</button>
-            </div>
-            <p style="color:#999;font-size:12px;margin-top:10px;margin-bottom:0;">AI-generated answers. Please weigh them against Scripture and pastoral guidance.</p>
         </div>
 
         <div class="section-title">Common Questions & Answers</div>
@@ -466,7 +455,7 @@
             document.getElementById('faq-' + i).classList.toggle('active');
         }
 
-        // ---- SEARCH ----
+        // ---- SEARCH (used by topic cards and footer links to filter FAQs below) ----
         function searchAndRun(query) {
             const q = query.toLowerCase().trim();
             const results = faqsData.filter(faq =>
@@ -475,26 +464,11 @@
                 faq.category.toLowerCase().includes(q)
             );
 
-            document.getElementById('searchInput').value = query;
-            document.getElementById('activeFilter').classList.add('show');
-            document.getElementById('activeFilterText').textContent = query;
-
             renderFaqs(results.length ? results : faqsData);
             document.getElementById('faqContainer').scrollIntoView({ behavior: 'smooth', block: 'start' });
         }
 
-        function handleSearch() {
-            const value = document.getElementById('searchInput').value;
-            if (value.trim()) {
-                searchAndRun(value);
-            } else {
-                clearFilter();
-            }
-        }
-
         function clearFilter() {
-            document.getElementById('searchInput').value = '';
-            document.getElementById('activeFilter').classList.remove('show');
             renderFaqs(faqsData);
         }
 
