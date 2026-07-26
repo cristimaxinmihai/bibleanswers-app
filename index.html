@@ -341,6 +341,16 @@
             </div>
         </div>
 
+        <div class="section-title">Ask BibleAnswers AI</div>
+        <div id="aiChatBox" style="background:#fff;border:1px solid var(--border-color);border-radius:14px;padding:20px;margin-bottom:50px;text-align:left;">
+            <div id="aiMessages" style="max-height:320px;overflow-y:auto;margin-bottom:14px;"></div>
+            <div style="display:flex;gap:8px;">
+                <input type="text" id="aiInput" placeholder="Ask any Bible question..." style="flex:1;border:1px solid #ddd;border-radius:24px;padding:10px 16px;font-size:14.5px;outline:none;" onkeydown="if(event.key==='Enter') sendAiQuestion()">
+                <button onclick="sendAiQuestion()" style="background:var(--accent-color);color:#fff;border:none;border-radius:50%;width:40px;height:40px;font-size:16px;cursor:pointer;flex-shrink:0;">→</button>
+            </div>
+            <p style="color:#999;font-size:12px;margin-top:10px;margin-bottom:0;">AI-generated answers. Please weigh them against Scripture and pastoral guidance.</p>
+        </div>
+
         <div class="section-title">Common Questions & Answers</div>
         <div id="faqContainer" class="faq-container"></div>
     </div>
@@ -486,6 +496,60 @@
             document.getElementById('searchInput').value = '';
             document.getElementById('activeFilter').classList.remove('show');
             renderFaqs(faqsData);
+        }
+
+        // ---- AI CHAT (calls our secure backend, never exposes any API key) ----
+        let aiConversation = [];
+
+        function appendAiMessage(role, text) {
+            const box = document.getElementById('aiMessages');
+            const bubble = document.createElement('div');
+            bubble.style.display = 'flex';
+            bubble.style.justifyContent = role === 'user' ? 'flex-end' : 'flex-start';
+            bubble.style.marginBottom = '10px';
+            bubble.innerHTML = `<div style="max-width:82%;background:${role === 'user' ? '#0051ff' : '#f2f4f8'};color:${role === 'user' ? '#fff' : '#111'};border-radius:16px;padding:10px 14px;font-size:14.5px;line-height:1.5;white-space:pre-wrap;">${text}</div>`;
+            box.appendChild(bubble);
+            box.scrollTop = box.scrollHeight;
+        }
+
+        async function sendAiQuestion() {
+            const input = document.getElementById('aiInput');
+            const question = input.value.trim();
+            if (!question) return;
+
+            appendAiMessage('user', question);
+            aiConversation.push({ role: 'user', content: question });
+            input.value = '';
+
+            const loadingId = 'loading-' + Date.now();
+            const box = document.getElementById('aiMessages');
+            const loadingBubble = document.createElement('div');
+            loadingBubble.id = loadingId;
+            loadingBubble.style.cssText = 'display:flex;justify-content:flex-start;margin-bottom:10px;';
+            loadingBubble.innerHTML = `<div style="background:#f2f4f8;border-radius:16px;padding:10px 14px;font-size:14px;color:#777;">Thinking…</div>`;
+            box.appendChild(loadingBubble);
+            box.scrollTop = box.scrollHeight;
+
+            try {
+                const response = await fetch('/api/ask', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ messages: aiConversation }),
+                });
+                const data = await response.json();
+                document.getElementById(loadingId)?.remove();
+
+                if (!response.ok) {
+                    appendAiMessage('assistant', 'Sorry, something went wrong. Please try again.');
+                    return;
+                }
+
+                appendAiMessage('assistant', data.text);
+                aiConversation.push({ role: 'assistant', content: data.text });
+            } catch (err) {
+                document.getElementById(loadingId)?.remove();
+                appendAiMessage('assistant', 'Sorry, something went wrong. Please try again.');
+            }
         }
 
         // ---- INIT ----
