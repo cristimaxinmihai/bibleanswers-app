@@ -501,13 +501,27 @@
         // ---- AI CHAT (calls our secure backend, never exposes any API key) ----
         let aiConversation = [];
 
+        function formatAiText(text) {
+            let safe = text
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;');
+            safe = safe.replace(/^&gt;\s?(.*)$/gm, '<div style="border-left:3px solid var(--accent-color);padding-left:10px;margin:6px 0;color:#555;">$1</div>');
+            safe = safe.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+            safe = safe.replace(/\*(.+?)\*/g, '<em>$1</em>');
+            return safe;
+        }
+
         function appendAiMessage(role, text) {
             const box = document.getElementById('aiMessages');
             const bubble = document.createElement('div');
             bubble.style.display = 'flex';
             bubble.style.justifyContent = role === 'user' ? 'flex-end' : 'flex-start';
             bubble.style.marginBottom = '10px';
-            bubble.innerHTML = `<div style="max-width:82%;background:${role === 'user' ? '#0051ff' : '#f2f4f8'};color:${role === 'user' ? '#fff' : '#111'};border-radius:16px;padding:10px 14px;font-size:14.5px;line-height:1.5;white-space:pre-wrap;">${text}</div>`;
+            const content = role === 'user'
+                ? text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+                : formatAiText(text);
+            bubble.innerHTML = `<div style="max-width:82%;background:${role === 'user' ? '#0051ff' : '#f2f4f8'};color:${role === 'user' ? '#fff' : '#111'};border-radius:16px;padding:10px 14px;font-size:14.5px;line-height:1.5;white-space:pre-wrap;">${content}</div>`;
             box.appendChild(bubble);
             box.scrollTop = box.scrollHeight;
         }
