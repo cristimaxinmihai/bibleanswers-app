@@ -308,7 +308,8 @@
         <p class="hero-subtitle">Find peace, answers, and support through God's Word.</p>
 
         <div id="aiChatBox" style="background:#fff;border:1px solid var(--border-color);border-radius:14px;padding:20px;margin-bottom:50px;text-align:left;">
-            <div style="display:flex;justify-content:flex-end;margin-bottom:8px;">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+                <span id="aiUsageCount" style="font-size:12px;color:#888;"></span>
                 <button onclick="clearAiChat()" style="background:none;border:none;color:var(--accent-color);font-size:13px;cursor:pointer;text-decoration:underline;padding:0;">Clear</button>
             </div>
             <div id="aiMessages" style="max-height:320px;overflow-y:auto;margin-bottom:14px;"></div>
@@ -317,6 +318,38 @@
                 <button onclick="sendAiQuestion()" style="background:var(--accent-color);color:#fff;border:none;border-radius:50%;width:40px;height:40px;font-size:16px;cursor:pointer;flex-shrink:0;">→</button>
             </div>
             <p style="color:#999;font-size:12px;margin-top:10px;margin-bottom:0;">AI-generated answers. Please weigh them against Scripture and pastoral guidance.</p>
+        </div>
+
+        <div id="paywallBox" style="display:none;background:#fff;border:1px solid var(--border-color);border-radius:14px;padding:30px 24px;margin-bottom:50px;text-align:center;">
+            <div style="font-size:32px;margin-bottom:10px;">🔒</div>
+            <h3 style="margin:0 0 8px;font-size:22px;">Your free trial has ended</h3>
+            <p style="color:var(--text-secondary);font-size:14.5px;margin:0 0 24px;">Subscribe to keep asking BibleAnswers AI unlimited questions, every day.</p>
+
+            <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:12px;margin-bottom:18px;">
+                <div style="border:1px solid var(--border-color);border-radius:12px;padding:16px 10px;">
+                    <div style="font-size:13px;color:var(--text-secondary);margin-bottom:4px;">Weekly</div>
+                    <div style="font-size:20px;font-weight:700;">$4.99</div>
+                    <div style="font-size:12px;color:var(--text-secondary);">/ week</div>
+                    <button onclick="handleSubscribe('weekly')" style="margin-top:10px;width:100%;background:#f2f4f8;color:#111;border:none;border-radius:20px;padding:8px 0;font-size:13px;font-weight:600;cursor:pointer;">Choose</button>
+                </div>
+                <div style="border:1px solid var(--border-color);border-radius:12px;padding:16px 10px;">
+                    <div style="font-size:13px;color:var(--text-secondary);margin-bottom:4px;">Monthly</div>
+                    <div style="font-size:20px;font-weight:700;">$12</div>
+                    <div style="font-size:12px;color:var(--text-secondary);">/ month</div>
+                    <button onclick="handleSubscribe('monthly')" style="margin-top:10px;width:100%;background:#f2f4f8;color:#111;border:none;border-radius:20px;padding:8px 0;font-size:13px;font-weight:600;cursor:pointer;">Choose</button>
+                </div>
+                <div style="border:2px solid var(--accent-color);border-radius:12px;padding:16px 10px;position:relative;">
+                    <div style="position:absolute;top:-10px;left:50%;transform:translateX(-50%);background:var(--accent-color);color:#fff;font-size:10px;font-weight:700;padding:2px 10px;border-radius:10px;">BEST VALUE</div>
+                    <div style="font-size:13px;color:var(--text-secondary);margin-bottom:4px;">Yearly</div>
+                    <div style="font-size:20px;font-weight:700;">$59</div>
+                    <div style="font-size:12px;color:var(--text-secondary);">/ year</div>
+                    <button onclick="handleSubscribe('yearly')" style="margin-top:10px;width:100%;background:var(--accent-color);color:#fff;border:none;border-radius:20px;padding:8px 0;font-size:13px;font-weight:600;cursor:pointer;">Choose</button>
+                </div>
+            </div>
+
+            <div id="promoBanner" style="display:none;background:#fff4e5;border:1px solid #ffd8a8;border-radius:10px;padding:10px 14px;font-size:13.5px;color:#7a4a00;">
+                🎉 Limited-time offer: get the yearly plan for just <strong>$39</strong> — <a href="#" onclick="event.preventDefault(); handleSubscribe('yearly-promo')" style="color:#7a4a00;text-decoration:underline;">claim it now</a>
+            </div>
         </div>
 
         <div class="section-title">Explore Topics</div>
@@ -476,7 +509,67 @@
         }
 
         // ---- AI CHAT (calls our secure backend, never exposes any API key) ----
+        const DAILY_LIMIT = 5;
+        const TRIAL_DAYS = 7;
         let aiConversation = [];
+
+        function getTrialDaysElapsed() {
+            let start = localStorage.getItem('trialStart');
+            if (!start) {
+                start = new Date().toISOString().slice(0, 10);
+                localStorage.setItem('trialStart', start);
+            }
+            const startDate = new Date(start);
+            const today = new Date();
+            const diffDays = Math.floor((today - startDate) / (1000 * 60 * 60 * 24));
+            return diffDays;
+        }
+
+        function isTrialExpired() {
+            return getTrialDaysElapsed() >= TRIAL_DAYS;
+        }
+
+        function checkAccessState() {
+            const chatBox = document.getElementById('aiChatBox');
+            const paywallBox = document.getElementById('paywallBox');
+            if (isTrialExpired()) {
+                chatBox.style.display = 'none';
+                paywallBox.style.display = 'block';
+                // Occasionally show the discounted promo (about 1 in 3 visits)
+                if (Math.random() < 0.33) {
+                    document.getElementById('promoBanner').style.display = 'block';
+                }
+            } else {
+                chatBox.style.display = 'block';
+                paywallBox.style.display = 'none';
+            }
+        }
+
+        function handleSubscribe(plan) {
+            // Placeholder until real payment processing (Stripe / Apple In-App Purchase) is connected.
+            alert('Subscription checkout coming soon for the ' + plan + ' plan. Payment processing is not yet connected.');
+        }
+
+        function getUsageState() {
+            const today = new Date().toISOString().slice(0, 10);
+            let raw = localStorage.getItem('aiUsage');
+            let state = raw ? JSON.parse(raw) : { date: today, count: 0 };
+            if (state.date !== today) {
+                state = { date: today, count: 0 };
+            }
+            return state;
+        }
+
+        function saveUsageState(state) {
+            localStorage.setItem('aiUsage', JSON.stringify(state));
+        }
+
+        function updateUsageDisplay() {
+            const state = getUsageState();
+            const remaining = Math.max(0, DAILY_LIMIT - state.count);
+            const el = document.getElementById('aiUsageCount');
+            if (el) el.textContent = `${remaining}/${DAILY_LIMIT} free questions left today`;
+        }
 
         function clearAiChat() {
             aiConversation = [];
@@ -513,6 +606,12 @@
             const question = input.value.trim();
             if (!question) return;
 
+            const state = getUsageState();
+            if (state.count >= DAILY_LIMIT) {
+                appendAiMessage('assistant', `You've used all ${DAILY_LIMIT} free questions for today. Please come back tomorrow, or consider our premium plan for unlimited questions.`);
+                return;
+            }
+
             appendAiMessage('user', question);
             aiConversation.push({ role: 'user', content: question });
             input.value = '';
@@ -542,6 +641,11 @@
 
                 appendAiMessage('assistant', data.text);
                 aiConversation.push({ role: 'assistant', content: data.text });
+
+                const newState = getUsageState();
+                newState.count += 1;
+                saveUsageState(newState);
+                updateUsageDisplay();
             } catch (err) {
                 document.getElementById(loadingId)?.remove();
                 appendAiMessage('assistant', 'Sorry, something went wrong. Please try again.');
@@ -551,6 +655,8 @@
         // ---- INIT ----
         renderFooter();
         renderFaqs(faqsData);
+        updateUsageDisplay();
+        checkAccessState();
     </script>
 </body>
 </html>
