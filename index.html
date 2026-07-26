@@ -1,0 +1,496 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BibleAnswers - Grow Your Faith Daily</title>
+    <style>
+        :root {
+            --bg-color: #f7f7f8;
+            --card-bg: #ffffff;
+            --text-primary: #111111;
+            --text-secondary: #555555;
+            --border-color: #eaeaea;
+            --accent-color: #0051ff;
+        }
+        * { box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-primary);
+            margin: 0;
+            padding: 0;
+        }
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px 40px;
+            background: #ffffff;
+            border-bottom: 1px solid var(--border-color);
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+        .back-btn {
+            text-decoration: none;
+            color: var(--text-primary);
+            font-size: 14px;
+            font-weight: 500;
+            border: 1px solid var(--border-color);
+            padding: 6px 14px;
+            border-radius: 20px;
+        }
+        .logo {
+            font-weight: bold;
+            font-size: 18px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .header-center {
+            display: flex;
+            gap: 25px;
+        }
+        .header-center a {
+            text-decoration: none;
+            color: var(--text-primary);
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+        }
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        .sign-in {
+            text-decoration: none;
+            color: var(--text-primary);
+            font-size: 14px;
+            font-weight: 500;
+        }
+        .sign-up-btn {
+            background-color: var(--accent-color);
+            color: white;
+            text-decoration: none;
+            padding: 8px 18px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: 500;
+        }
+        .main-container {
+            max-width: 900px;
+            margin: 40px auto;
+            text-align: center;
+            padding: 0 20px;
+        }
+        .hero-title {
+            font-size: 38px;
+            font-weight: bold;
+            margin-bottom: 10px;
+            letter-spacing: -0.5px;
+        }
+        .hero-subtitle {
+            color: var(--text-secondary);
+            font-size: 16px;
+            margin-bottom: 30px;
+        }
+        .search-box {
+            display: flex;
+            align-items: center;
+            background: #ffffff;
+            border: 1px solid #ccc;
+            border-radius: 30px;
+            padding: 8px 15px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.03);
+            margin-bottom: 20px;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        .search-box input {
+            flex: 1;
+            border: none;
+            outline: none;
+            font-size: 16px;
+            padding: 8px;
+            background: transparent;
+        }
+        .search-box button {
+            background-color: var(--accent-color);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 36px;
+            height: 36px;
+            cursor: pointer;
+            font-size: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+        .active-filter {
+            margin-bottom: 25px;
+            font-size: 14px;
+            color: var(--text-secondary);
+            display: none;
+            text-align: left;
+        }
+        .active-filter.show { display: block; }
+        .active-filter button {
+            background: none;
+            border: none;
+            color: var(--accent-color);
+            cursor: pointer;
+            font-size: 14px;
+            text-decoration: underline;
+            padding: 0;
+            margin-left: 8px;
+        }
+        .section-title {
+            text-align: left;
+            font-size: 20px;
+            font-weight: bold;
+            margin-bottom: 20px;
+        }
+        .topics-grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 15px;
+            margin-bottom: 50px;
+        }
+        .topic-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 14px;
+            padding: 20px 10px;
+            text-align: center;
+            cursor: pointer;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.01);
+            transition: all 0.2s;
+        }
+        .topic-card:hover {
+            border-color: var(--accent-color);
+        }
+        .topic-icon {
+            font-size: 24px;
+            margin-bottom: 10px;
+        }
+        .topic-name {
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--text-primary);
+        }
+        .faq-container {
+            text-align: left;
+            margin-bottom: 60px;
+        }
+        .faq-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 15px;
+            cursor: pointer;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.02);
+        }
+        .faq-question {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--accent-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .faq-question .chevron {
+            transition: transform 0.2s;
+            flex-shrink: 0;
+            margin-left: 10px;
+        }
+        .faq-card.active .faq-question .chevron {
+            transform: rotate(180deg);
+        }
+        .faq-intro {
+            margin-top: 8px;
+            color: var(--text-secondary);
+            font-size: 14px;
+            line-height: 1.5;
+        }
+        .passage-box {
+            margin-top: 15px;
+            padding: 12px;
+            background: #f9f9f9;
+            border-left: 4px solid var(--accent-color);
+            font-size: 14px;
+            display: none;
+        }
+        .faq-card.active .passage-box {
+            display: block;
+        }
+        .no-results {
+            color: var(--text-secondary);
+            font-size: 15px;
+            padding: 20px 0;
+        }
+        footer {
+            background-color: #f9f9f9;
+            padding: 40px 20px;
+            border-top: 1px solid var(--border-color);
+            color: #333;
+        }
+        .footer-grid {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 30px;
+        }
+        .footer-grid h4 {
+            font-size: 16px;
+            margin-bottom: 15px;
+            color: #111;
+        }
+        .footer-grid ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            line-height: 2;
+        }
+        .footer-grid ul li a {
+            text-decoration: none;
+            color: #555;
+            font-size: 14px;
+            cursor: pointer;
+        }
+        .footer-grid ul li a:hover {
+            color: var(--accent-color);
+        }
+        .footer-bottom {
+            max-width: 1200px;
+            margin: 40px auto 0 auto;
+            text-align: center;
+            font-size: 13px;
+            color: #777;
+            border-top: 1px solid #eaeaea;
+            padding-top: 20px;
+        }
+        @media (max-width: 700px) {
+            .topics-grid { grid-template-columns: repeat(3, 1fr); }
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="header-left">
+            <a href="#" class="back-btn">&larr; Back</a>
+            <div class="logo">📖 BibleAnswers</div>
+        </div>
+        <div class="header-center">
+            <a onclick="searchAndRun('lessons')">Bible Lessons</a>
+            <a onclick="searchAndRun('encouragement')">Encouragement</a>
+            <a onclick="searchAndRun('pray')">Prayer</a>
+        </div>
+        <div class="header-right">
+            <a href="#" class="sign-in">Sign In</a>
+            <a href="#" class="sign-up-btn">Sign Up</a>
+        </div>
+    </header>
+
+    <div class="main-container">
+        <h1 class="hero-title">Grow Your Faith Daily</h1>
+        <p class="hero-subtitle">Find peace, answers, and support through God's Word.</p>
+
+        <div class="search-box">
+            <input type="text" id="searchInput" placeholder="Search any Bible question..." onkeydown="if(event.key === 'Enter') handleSearch()">
+            <button onclick="handleSearch()">→</button>
+        </div>
+
+        <div class="active-filter" id="activeFilter">
+            Showing results for "<span id="activeFilterText"></span>"
+            <button onclick="clearFilter()">Clear</button>
+        </div>
+
+        <div class="section-title">Explore Topics</div>
+        <div class="topics-grid">
+            <div class="topic-card" onclick="searchAndRun('pray')">
+                <div class="topic-icon">🙏</div>
+                <div class="topic-name">Pray</div>
+            </div>
+            <div class="topic-card" onclick="searchAndRun('verses')">
+                <div class="topic-icon">📖</div>
+                <div class="topic-name">Verses</div>
+            </div>
+            <div class="topic-card" onclick="searchAndRun('questions')">
+                <div class="topic-icon">❓</div>
+                <div class="topic-name">Questions</div>
+            </div>
+            <div class="topic-card" onclick="searchAndRun('encouragement')">
+                <div class="topic-icon">❤️</div>
+                <div class="topic-name">Encouragement</div>
+            </div>
+            <div class="topic-card" onclick="searchAndRun('study')">
+                <div class="topic-icon">📚</div>
+                <div class="topic-name">Study</div>
+            </div>
+        </div>
+
+        <div class="section-title">Common Questions & Answers</div>
+        <div id="faqContainer" class="faq-container"></div>
+    </div>
+
+    <footer>
+        <div class="footer-grid">
+            <div>
+                <h4>Bible Verses</h4>
+                <ul id="footerBibleVerses"></ul>
+            </div>
+            <div>
+                <h4>Bible Lessons</h4>
+                <ul id="footerBibleLessons"></ul>
+            </div>
+            <div>
+                <h4>Top questions</h4>
+                <ul id="footerTopQuestions"></ul>
+            </div>
+            <div>
+                <h4>Explore</h4>
+                <ul id="footerExplore"></ul>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            Copyright &copy; 2026 BibleAnswers. All Rights Reserved.
+        </div>
+    </footer>
+
+    <script>
+        // ---- DATA ----
+        const faqsData = [
+            {
+                question: "How can I start praying effectively?",
+                answer: "Jesus taught His disciples a model for heartfelt communication with God.",
+                verse: "Matthew 6:9-13",
+                verseText: "This, then, is how you should pray: Our Father in heaven, hallowed be your name...",
+                category: "Pray"
+            },
+            {
+                question: "Is Getting Tattoos a Sin?",
+                answer: "The Bible speaks about honoring the body as a temple, which shapes how many believers think about tattoos.",
+                verse: "1 Corinthians 6:19-20",
+                verseText: "Do you not know that your bodies are temples of the Holy Spirit, who is in you...",
+                category: "Questions"
+            },
+            {
+                question: "What about Lust?",
+                answer: "Scripture calls believers to guard their hearts and minds, teaching that lust begins internally before it becomes action.",
+                verse: "Matthew 5:28",
+                verseText: "But I tell you that anyone who looks at a woman lustfully has already committed adultery with her in his heart.",
+                category: "Questions"
+            },
+            {
+                question: "How to Manage Anxiety",
+                answer: "Scripture addresses anxiety by directing believers to trust God and bring their worries to Him in prayer.",
+                verse: "Philippians 4:6-7",
+                verseText: "Do not be anxious about anything, but in every situation, by prayer and petition, with thanksgiving, present your requests to God. And the peace of God, which transcends all understanding, will guard your hearts and your minds in Christ Jesus.",
+                category: "Encouragement"
+            },
+            {
+                question: "What is faith?",
+                answer: "Faith is described as confidence in what we hope for and assurance about what we cannot yet see.",
+                verse: "Hebrews 11:1",
+                verseText: "Now faith is confidence in what we hope for and assurance about what we do not see.",
+                category: "Study"
+            },
+            {
+                question: "Bible Verse of the Day",
+                answer: "A daily encouragement to carry with you.",
+                verse: "Proverbs 3:5-6",
+                verseText: "Trust in the Lord with all your heart and lean not on your own understanding; in all your ways submit to him, and he will make your paths straight.",
+                category: "Verses"
+            }
+        ];
+
+        const footerLinks = {
+            footerBibleVerses: ["About Love", "About Relationships", "About Marriage", "About Family", "About Money", "About Trust", "About Pride", "About Life", "About Hope", "About Peace", "About Heaven", "About Self Love"],
+            footerBibleLessons: ["Biblically Accurate Demons", "Biblically Accurate Angels", "Church Anniversary Themes", "New Month Prayers", "Psalm 45:2 Meaning", "Seven Deadly Sins", "Is Vaping a Sin?", "Was Goliath Nephilim?", "Prayers for Good Luck", "Women of the Bible", "Old Testament vs New Testament"],
+            footerTopQuestions: ["Is Getting Tattoos a Sin?", "What about Lust?", "How to Manage Anxiety", "Who Created God?", "Romantic vs Gods Love", "Love vs Other Spiritualities", "Is Watching Porn a Sin?", "Husbands & Wives Roles?", "What about Dating?", "How do I overcome Lust?", "What is faith?", "Is Masturbation a Sin?"],
+            footerExplore: ["Bible Verse of the Day", "All Bible Lessons", "All Bible Verses", "Top questions", "Bible Glossary", "Compassionate Capitalism", "Why Bible Matters", "About Bible Chat", "Contact us", "Editorial Policy"]
+        };
+
+        // ---- RENDER FOOTER ----
+        function renderFooter() {
+            Object.keys(footerLinks).forEach(listId => {
+                const ul = document.getElementById(listId);
+                ul.innerHTML = footerLinks[listId].map(title =>
+                    `<li><a onclick="searchAndRun('${title.replace(/'/g, "\\'")}')">${title}</a></li>`
+                ).join('');
+            });
+        }
+
+        // ---- RENDER FAQS ----
+        function renderFaqs(list) {
+            const container = document.getElementById('faqContainer');
+            if (!list.length) {
+                container.innerHTML = '<div class="no-results">No results found. Try a different search term.</div>';
+                return;
+            }
+            container.innerHTML = list.map((faq, i) => `
+                <div class="faq-card" id="faq-${i}" onclick="toggleFaq(${i})">
+                    <div class="faq-question">
+                        <span>${faq.question}</span>
+                        <span class="chevron">▾</span>
+                    </div>
+                    <div class="faq-intro">${faq.answer}</div>
+                    <div class="passage-box"><strong>${faq.verse}</strong> — ${faq.verseText}</div>
+                </div>
+            `).join('');
+        }
+
+        function toggleFaq(i) {
+            document.getElementById('faq-' + i).classList.toggle('active');
+        }
+
+        // ---- SEARCH ----
+        function searchAndRun(query) {
+            const q = query.toLowerCase().trim();
+            const results = faqsData.filter(faq =>
+                faq.question.toLowerCase().includes(q) ||
+                faq.answer.toLowerCase().includes(q) ||
+                faq.category.toLowerCase().includes(q)
+            );
+
+            document.getElementById('searchInput').value = query;
+            document.getElementById('activeFilter').classList.add('show');
+            document.getElementById('activeFilterText').textContent = query;
+
+            renderFaqs(results.length ? results : faqsData);
+            document.getElementById('faqContainer').scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+
+        function handleSearch() {
+            const value = document.getElementById('searchInput').value;
+            if (value.trim()) {
+                searchAndRun(value);
+            } else {
+                clearFilter();
+            }
+        }
+
+        function clearFilter() {
+            document.getElementById('searchInput').value = '';
+            document.getElementById('activeFilter').classList.remove('show');
+            renderFaqs(faqsData);
+        }
+
+        // ---- INIT ----
+        renderFooter();
+        renderFaqs(faqsData);
+    </script>
+</body>
+</html>
