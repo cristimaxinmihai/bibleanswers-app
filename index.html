@@ -604,16 +604,25 @@
             }
         }
 
-        function handleSubscribe(plan) {
-            // TEST: simulare checkout, până conectăm Stripe/Apple IAP
-            const confirmed = confirm('TEST CHECKOUT\n\nSimulăm o plată reușită pentru planul "' + plan + '".\n\nContinuăm?');
-            if (!confirmed) return;
+        async function handleSubscribe(plan) {
+        try {
+            const response = await fetch('/api/create-checkout-session', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ plan }),
+            });
+            const data = await response.json();
 
-            localStorage.setItem('subscriptionActive', 'true');
-            localStorage.setItem('subscriptionPlan', plan);
+            if (!response.ok || !data.url) {
+                alert('Sorry, something went wrong starting checkout. Please try again.');
+                return;
+            }
 
-            alert('✅ Plată simulată cu succes! Ai acces complet la BibleAnswers AI.');
-            checkAccessState();
+            window.location.href = data.url;
+        } catch (err) {
+            alert('Sorry, something went wrong. Please try again.');
+        }
+    }
         }
 
         function getUsageState() {
