@@ -422,6 +422,10 @@
         if (testParam === 'reset') {
             localStorage.clear();
         }
+        const checkoutParam = new URLSearchParams(window.location.search).get('checkout');
+    if (checkoutParam === 'success') {
+      localStorage.setItem('subscriptionActive', 'true');
+    }
 
         // ---- DATA ----
         const faqsData = [
