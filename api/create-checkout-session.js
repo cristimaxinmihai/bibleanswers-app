@@ -4,7 +4,7 @@
 
 const PRICE_IDS = {
   weekly: 'price_1TxfCjJmNPM3ykGBHdr0m1Va',
-  monthly: 'price_1TxfKTJmNPM3ykGBXpg6WA0z',
+  monthly: 'price_1TxfKTJmNPM3ykGBXpg6WAOz',
   yearly: 'price_1TxfIgJmNPM3ykGB0MLPKhxB',
   'yearly-promo': 'price_1TxfIgJmNPM3ykGB0MLPKhxB', // folosim același preț yearly pentru promo, până creăm un discount separat în Stripe
 };
