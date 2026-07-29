@@ -3,10 +3,10 @@
 // și returnează URL-ul către care browserul trebuie redirecționat.
 
 const PRICE_IDS = {
-  weekly: 'price_1TxfCjJmNPM3ykGBHdr0m1Va',
-  monthly: 'price_1TxfKTJmNPM3ykGBXpg6WAOz',
-  yearly: 'price_1TxfIgJmNPM3ykGB0MLPKhxB',
-  'yearly-promo': 'price_1TxfIgJmNPM3ykGB0MLPKhxB', // folosim același preț yearly pentru promo, până creăm un discount separat în Stripe
+  weekly: 'price_1Tyc0OJc0oLZr7dskStORKLt',
+  monthly: 'price_1Tyc0SJc0oLZr7dsogTpJB6A',
+  yearly: 'price_1Tyc0TJc0oLZr7dsbPHo9ukl',
+  'yearly-promo': 'price_1Tyc0TJc0oLZr7dsbPHo9ukl', // acelasi pret yearly pentru promo
 };
 
 module.exports = async (req, res) => {
