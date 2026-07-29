@@ -563,7 +563,7 @@
                 faq.category.toLowerCase().includes(q)
             );
 
-            renderFaqs(results.length ? results : faqsData);
+            renderFaqs(results);
             document.getElementById('faqContainer').scrollIntoView({ behavior: 'smooth', block: 'start' });
         }
 
