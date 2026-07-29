@@ -644,11 +644,14 @@
         }
 
         function updateUsageDisplay() {
-            const state = getUsageState();
-            const remaining = Math.max(0, DAILY_LIMIT - state.count);
-            const el = document.getElementById('aiUsageCount');
-            if (el) el.textContent = `${remaining}/${DAILY_LIMIT} free questions left today`;
-        }
+    const state = getUsageState();
+    const remaining = Math.max(0, DAILY_LIMIT - state.count);
+    const el = document.getElementById('aiUsageCount');
+    const isSubscribed = localStorage.getItem('subscriptionActive') === 'true';
+    if (el) el.textContent = isSubscribed
+        ? 'Unlimited questions'
+        : `${remaining}/${DAILY_LIMIT} free questions left today`;
+}
 
         function clearAiChat() {
             aiConversation = [];
