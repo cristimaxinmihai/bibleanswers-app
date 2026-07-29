@@ -689,9 +689,11 @@
             if (!question) return;
 
             const state = getUsageState();
-            if (state.count >= DAILY_LIMIT) {
+            const isSubscribed = localStorage.getItem('subscriptionActive') === 'true';
+            if (!isSubscribed && state.count >= DAILY_LIMIT) {
                 appendAiMessage('assistant', `You've used all ${DAILY_LIMIT} free questions for today. Please come back tomorrow, or consider our premium plan for unlimited questions.`);
                 return;
+    
             }
 
             appendAiMessage('user', question);
