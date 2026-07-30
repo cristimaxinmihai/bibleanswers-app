@@ -410,7 +410,7 @@
         </div>
         <div class="footer-bottom">
             Copyright &copy; 2026 BibleAnswers. All Rights Reserved.
-            <br><a href="/terms.html">Terms of Service</a> · <a href="/privacy.html">Privacy Policy</a>
+            <br><a href="/terms.html">Terms of Service</a> · <a href="/privacy.html">Privacy Policy</a> · <a href="/editorial.html">Editorial Policy</a>
         </div>
     </footer>
 
@@ -754,16 +754,29 @@
             footerBibleVerses: ["About Love", "About Relationships", "About Marriage", "About Family", "About Money", "About Trust", "About Pride", "About Life", "About Hope", "About Peace", "About Heaven", "About Self Love"],
             footerBibleLessons: ["Biblically Accurate Demons", "Biblically Accurate Angels", "Church Anniversary Themes", "New Month Prayers", "Psalm 45:2 Meaning", "Seven Deadly Sins", "Is Vaping a Sin?", "Was Goliath Nephilim?", "Prayers for Good Luck", "Women of the Bible", "Old Testament vs New Testament"],
             footerTopQuestions: ["Is Getting Tattoos a Sin?", "What about Lust?", "How to Manage Anxiety", "Who Created God?", "Romantic vs Gods Love", "Love vs Other Spiritualities", "Is Watching Porn a Sin?", "Husbands & Wives Roles?", "What about Dating?", "How do I overcome Lust?", "What is faith?", "Is Masturbation a Sin?"],
-            footerExplore: ["Bible Verse of the Day", "All Bible Lessons", "All Bible Verses", "Top questions", "Bible Glossary", "Compassionate Capitalism", "Why Bible Matters", "About Bible Chat", "Contact us", "Editorial Policy"]
+            footerExplore: [
+                "Bible Verse of the Day",
+                "All Bible Lessons",
+                "All Bible Verses",
+                "Top questions",
+                "Bible Glossary",
+                "Why Bible Matters",
+                { title: "Contact us", href: "mailto:cristimaxinmihai@yahoo.com" },
+                { title: "Editorial Policy", href: "/editorial.html" }
+            ]
         };
 
         // ---- RENDER FOOTER ----
         function renderFooter() {
             Object.keys(footerLinks).forEach(listId => {
                 const ul = document.getElementById(listId);
-                ul.innerHTML = footerLinks[listId].map(title =>
-                    `<li><a onclick="searchAndRun('${title.replace(/'/g, "\\'")}')">${title}</a></li>`
-                ).join('');
+                ul.innerHTML = footerLinks[listId].map(item => {
+                    // Plain strings filter the Q&A list; objects are real links (email, page).
+                    if (typeof item === 'string') {
+                        return `<li><a onclick="searchAndRun('${item.replace(/'/g, "\\'")}')">${item}</a></li>`;
+                    }
+                    return `<li><a href="${item.href}">${item.title}</a></li>`;
+                }).join('');
             });
         }
 
