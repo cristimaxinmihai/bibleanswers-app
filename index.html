@@ -321,9 +321,9 @@
         </div>
 
         <div id="paywallBox" style="display:none;background:#fff;border:1px solid var(--border-color);border-radius:14px;padding:30px 24px;margin-bottom:50px;text-align:center;">
-            <div style="font-size:32px;margin-bottom:10px;">🔒</div>
-            <h3 style="margin:0 0 8px;font-size:22px;">Your free trial has ended</h3>
-            <p style="color:var(--text-secondary);font-size:14.5px;margin:0 0 24px;">Subscribe to keep asking BibleAnswers AI unlimited questions, every day.</p>
+            <div id="paywallIcon" style="font-size:32px;margin-bottom:10px;">🔒</div>
+            <h3 id="paywallTitle" style="margin:0 0 8px;font-size:22px;">Your free trial has ended</h3>
+            <p id="paywallSubtitle" style="color:var(--text-secondary);font-size:14.5px;margin:0 0 24px;">Subscribe to keep asking BibleAnswers AI unlimited questions, every day.</p>
 
             <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:12px;margin-bottom:18px;">
                 <div style="border:1px solid var(--border-color);border-radius:12px;padding:16px 10px;">
@@ -606,6 +606,24 @@
             } else {
                 chatBox.style.display = 'block';
                 paywallBox.style.display = 'none';
+                // Still inside the trial, but out of free questions for today:
+                // keep the chat visible and show the plans underneath it.
+                if (!isSubscribed && getUsageState().count >= DAILY_LIMIT) {
+                    showDailyLimitPlans(false);
+                }
+            }
+        }
+
+        // Shows the plan cards under the chat when the daily free limit is reached.
+        function showDailyLimitPlans(shouldScroll) {
+            const paywallBox = document.getElementById('paywallBox');
+            if (!paywallBox) return;
+            document.getElementById('paywallIcon').textContent = '📖';
+            document.getElementById('paywallTitle').textContent = 'You have used your free questions for today';
+            document.getElementById('paywallSubtitle').textContent = 'Come back tomorrow, or subscribe for unlimited questions every day.';
+            paywallBox.style.display = 'block';
+            if (shouldScroll) {
+                paywallBox.scrollIntoView({ behavior: 'smooth', block: 'center' });
             }
         }
 
@@ -692,7 +710,8 @@
             const state = getUsageState();
             const isSubscribed = localStorage.getItem('subscriptionActive') === 'true';
             if (!isSubscribed && state.count >= DAILY_LIMIT) {
-                appendAiMessage('assistant', `You've used all ${DAILY_LIMIT} free questions for today. Please come back tomorrow, or consider our premium plan for unlimited questions.`);
+                appendAiMessage('assistant', `You have used all ${DAILY_LIMIT} free questions for today. Please come back tomorrow.`);
+                showDailyLimitPlans(true);
                 return;
     
             }
@@ -731,6 +750,11 @@
                 newState.count += 1;
                 saveUsageState(newState);
                 updateUsageDisplay();
+
+                // Out of free questions after this answer: surface the plans.
+                if (!isSubscribed && newState.count >= DAILY_LIMIT) {
+                    showDailyLimitPlans(false);
+                }
             } catch (err) {
                 document.getElementById(loadingId)?.remove();
                 appendAiMessage('assistant', 'Sorry, something went wrong. Please try again.');
