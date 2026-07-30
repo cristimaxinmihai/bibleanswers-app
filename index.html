@@ -289,7 +289,7 @@
 
     <header>
         <div class="header-left">
-            <a href="#" class="back-btn" onclick="event.preventDefault(); window.scrollTo({ top: 0, behavior: 'smooth' });">&larr; Back</a>
+            <a href="#" class="back-btn">&larr; Back</a>
             <div class="logo">📖 BibleAnswers</div>
         </div>
         <div class="header-center">
@@ -307,49 +307,14 @@
         <h1 class="hero-title">Grow Your Faith Daily</h1>
         <p class="hero-subtitle">Find peace, answers, and support through God's Word.</p>
 
-        <div id="aiChatBox" style="background:#fff;border:1px solid var(--border-color);border-radius:14px;padding:20px;margin-bottom:50px;text-align:left;">
-            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
-                <span id="aiUsageCount" style="font-size:12px;color:#888;"></span>
-                <button onclick="clearAiChat()" style="background:none;border:none;color:var(--accent-color);font-size:13px;cursor:pointer;text-decoration:underline;padding:0;">Clear</button>
-            </div>
-            <div id="aiMessages" style="max-height:320px;overflow-y:auto;margin-bottom:14px;"></div>
-            <div style="display:flex;gap:8px;">
-                <input type="text" id="aiInput" placeholder="Ask any Bible question..." style="flex:1;border:1px solid #ddd;border-radius:24px;padding:10px 16px;font-size:14.5px;outline:none;" onkeydown="if(event.key==='Enter') sendAiQuestion()">
-                <button onclick="sendAiQuestion()" style="background:var(--accent-color);color:#fff;border:none;border-radius:50%;width:40px;height:40px;font-size:16px;cursor:pointer;flex-shrink:0;">→</button>
-            </div>
-            <p style="color:#999;font-size:12px;margin-top:10px;margin-bottom:0;">AI-generated answers. Please weigh them against Scripture and pastoral guidance.</p>
+        <div class="search-box">
+            <input type="text" id="searchInput" placeholder="Search any Bible question..." onkeydown="if(event.key === 'Enter') handleSearch()">
+            <button onclick="handleSearch()">→</button>
         </div>
 
-        <div id="paywallBox" style="display:none;background:#fff;border:1px solid var(--border-color);border-radius:14px;padding:30px 24px;margin-bottom:50px;text-align:center;">
-            <div id="paywallIcon" style="font-size:32px;margin-bottom:10px;">🔒</div>
-            <h3 id="paywallTitle" style="margin:0 0 8px;font-size:22px;">Your free trial has ended</h3>
-            <p id="paywallSubtitle" style="color:var(--text-secondary);font-size:14.5px;margin:0 0 24px;">Subscribe to keep asking BibleAnswers AI unlimited questions, every day.</p>
-
-            <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:12px;margin-bottom:18px;">
-                <div style="border:1px solid var(--border-color);border-radius:12px;padding:16px 10px;">
-                    <div style="font-size:13px;color:var(--text-secondary);margin-bottom:4px;">Weekly</div>
-                    <div style="font-size:20px;font-weight:700;">$4.99</div>
-                    <div style="font-size:12px;color:var(--text-secondary);">/ week</div>
-                    <button onclick="handleSubscribe('weekly')" style="margin-top:10px;width:100%;background:#f2f4f8;color:#111;border:none;border-radius:20px;padding:8px 0;font-size:13px;font-weight:600;cursor:pointer;">Choose</button>
-                </div>
-                <div style="border:1px solid var(--border-color);border-radius:12px;padding:16px 10px;">
-                    <div style="font-size:13px;color:var(--text-secondary);margin-bottom:4px;">Monthly</div>
-                    <div style="font-size:20px;font-weight:700;">$12</div>
-                    <div style="font-size:12px;color:var(--text-secondary);">/ month</div>
-                    <button onclick="handleSubscribe('monthly')" style="margin-top:10px;width:100%;background:#f2f4f8;color:#111;border:none;border-radius:20px;padding:8px 0;font-size:13px;font-weight:600;cursor:pointer;">Choose</button>
-                </div>
-                <div style="border:2px solid var(--accent-color);border-radius:12px;padding:16px 10px;position:relative;">
-                    <div style="position:absolute;top:-10px;left:50%;transform:translateX(-50%);background:var(--accent-color);color:#fff;font-size:10px;font-weight:700;padding:2px 10px;border-radius:10px;">BEST VALUE</div>
-                    <div style="font-size:13px;color:var(--text-secondary);margin-bottom:4px;">Yearly</div>
-                    <div style="font-size:20px;font-weight:700;">$59</div>
-                    <div style="font-size:12px;color:var(--text-secondary);">/ year</div>
-                    <button onclick="handleSubscribe('yearly')" style="margin-top:10px;width:100%;background:var(--accent-color);color:#fff;border:none;border-radius:20px;padding:8px 0;font-size:13px;font-weight:600;cursor:pointer;">Choose</button>
-                </div>
-            </div>
-
-            <div id="promoBanner" style="display:none;background:#fff4e5;border:1px solid #ffd8a8;border-radius:10px;padding:10px 14px;font-size:13.5px;color:#7a4a00;">
-                🎉 Limited-time offer: get the yearly plan for just <strong>$39</strong> — <a href="#" onclick="event.preventDefault(); handleSubscribe('yearly-promo')" style="color:#7a4a00;text-decoration:underline;">claim it now</a>
-            </div>
+        <div class="active-filter" id="activeFilter">
+            Showing results for "<span id="activeFilterText"></span>"
+            <button onclick="clearFilter()">Clear</button>
         </div>
 
         <div class="section-title">Explore Topics</div>
@@ -376,15 +341,6 @@
             </div>
         </div>
 
-        <div style="background:#fff;border:1px solid var(--border-color);border-radius:14px;padding:24px;margin-bottom:40px;text-align:center;">
-            <div style="font-size:13px;color:var(--text-secondary);margin-bottom:6px;">🙏 Prayer of the Day</div>
-            <h3 id="dailyPrayerTitle" style="margin:0 0 10px;font-size:20px;"></h3>
-            <p id="dailyPrayerText" style="color:var(--text-secondary);font-size:14.5px;font-style:italic;margin:0;"></p>
-        </div>
-
-        <div class="section-title">Prayers</div>
-        <div id="prayersContainer" class="faq-container"></div>
-
         <div class="section-title">Common Questions & Answers</div>
         <div id="faqContainer" class="faq-container"></div>
     </div>
@@ -410,24 +366,10 @@
         </div>
         <div class="footer-bottom">
             Copyright &copy; 2026 BibleAnswers. All Rights Reserved.
-            <br><a href="/terms.html">Terms of Service</a> · <a href="/privacy.html">Privacy Policy</a>
         </div>
     </footer>
 
     <script>
-        // TEST HELPER: acces prin URL, ex: ?test=expire sau ?test=reset
-        const testParam = new URLSearchParams(window.location.search).get('test');
-        if (testParam === 'expire') {
-            localStorage.setItem('trialStart', '2020-01-01');
-        }
-        if (testParam === 'reset') {
-            localStorage.clear();
-        }
-        const checkoutParam = new URLSearchParams(window.location.search).get('checkout');
-    if (checkoutParam === 'success') {
-      localStorage.setItem('subscriptionActive', 'true');
-    }
-
         // ---- DATA ----
         const faqsData = [
             {
@@ -474,17 +416,6 @@
             }
         ];
 
-        const prayersData = [
-            { title: "Morning Prayer", category: "Morning", text: "Heavenly Father, thank You for this new day. Guide my steps, fill my heart with Your peace, and help me to walk in Your light. In Jesus' name, Amen." },
-            { title: "Evening Prayer", category: "Evening", text: "Lord, as this day comes to a close, I thank You for Your faithfulness. Watch over me through the night and renew my spirit for tomorrow. Amen." },
-            { title: "Prayer for Healing", category: "Healing", text: "Lord Jesus, Great Physician, I bring my pain and weakness before You. Touch my body and my spirit, and grant strength and healing according to Your will. Amen." },
-            { title: "Prayer of Gratitude", category: "Gratitude", text: "Father, I thank You for every blessing You have given me, seen and unseen. Teach me to have a grateful heart in all circumstances. Amen." },
-            { title: "Prayer for Family", category: "Family", text: "Lord, watch over my family. Protect us, keep us close to You and to one another, and fill our home with Your love and peace. Amen." },
-            { title: "Prayer for Peace", category: "Peace", text: "God of peace, calm my anxious heart. Help me to trust in You and to release my worries into Your hands. Amen." },
-            { title: "Prayer for Strength", category: "Strength", text: "Lord, when I am weary, be my strength. Help me to run this race with endurance, trusting in Your power, not my own. Amen." },
-            { title: "Prayer for Guidance", category: "Guidance", text: "Father, direct my path today. Give me wisdom for the decisions ahead, and help me to follow Your will above my own. Amen." }
-        ];
-
         const footerLinks = {
             footerBibleVerses: ["About Love", "About Relationships", "About Marriage", "About Family", "About Money", "About Trust", "About Pride", "About Life", "About Hope", "About Peace", "About Heaven", "About Self Love"],
             footerBibleLessons: ["Biblically Accurate Demons", "Biblically Accurate Angels", "Church Anniversary Themes", "New Month Prayers", "Psalm 45:2 Meaning", "Seven Deadly Sins", "Is Vaping a Sin?", "Was Goliath Nephilim?", "Prayers for Good Luck", "Women of the Bible", "Old Testament vs New Testament"],
@@ -525,36 +456,7 @@
             document.getElementById('faq-' + i).classList.toggle('active');
         }
 
-        // ---- RENDER PRAYERS ----
-        function getDailyPrayer() {
-            const dayOfYear = Math.floor((new Date() - new Date(new Date().getFullYear(), 0, 0)) / 86400000);
-            return prayersData[dayOfYear % prayersData.length];
-        }
-
-        function renderDailyPrayer() {
-            const p = getDailyPrayer();
-            document.getElementById('dailyPrayerTitle').textContent = p.title;
-            document.getElementById('dailyPrayerText').textContent = p.text;
-        }
-
-        function renderPrayers(list) {
-            const container = document.getElementById('prayersContainer');
-            container.innerHTML = list.map((p, i) => `
-                <div class="faq-card" id="prayer-${i}" onclick="togglePrayer(${i})">
-                    <div class="faq-question">
-                        <span>🙏 ${p.title}</span>
-                        <span class="chevron">▾</span>
-                    </div>
-                    <div class="passage-box"><em>${p.text}</em></div>
-                </div>
-            `).join('');
-        }
-
-        function togglePrayer(i) {
-            document.getElementById('prayer-' + i).classList.toggle('active');
-        }
-
-        // ---- SEARCH (used by topic cards and footer links to filter FAQs below) ----
+        // ---- SEARCH ----
         function searchAndRun(query) {
             const q = query.toLowerCase().trim();
             const results = faqsData.filter(faq =>
@@ -563,211 +465,32 @@
                 faq.category.toLowerCase().includes(q)
             );
 
-            renderFaqs(results);
+            document.getElementById('searchInput').value = query;
+            document.getElementById('activeFilter').classList.add('show');
+            document.getElementById('activeFilterText').textContent = query;
+
+            renderFaqs(results.length ? results : faqsData);
             document.getElementById('faqContainer').scrollIntoView({ behavior: 'smooth', block: 'start' });
         }
 
-        function clearFilter() {
-            renderFaqs(faqsData);
-        }
-
-        // ---- AI CHAT (calls our secure backend, never exposes any API key) ----
-        const DAILY_LIMIT = 5;
-        const TRIAL_DAYS = 7;
-        let aiConversation = [];
-
-        function getTrialDaysElapsed() {
-            let start = localStorage.getItem('trialStart');
-            if (!start) {
-                start = new Date().toISOString().slice(0, 10);
-                localStorage.setItem('trialStart', start);
-            }
-            const startDate = new Date(start);
-            const today = new Date();
-            const diffDays = Math.floor((today - startDate) / (1000 * 60 * 60 * 24));
-            return diffDays;
-        }
-
-        function isTrialExpired() {
-            return getTrialDaysElapsed() >= TRIAL_DAYS;
-        }
-
-        function checkAccessState() {
-            const chatBox = document.getElementById('aiChatBox');
-            const paywallBox = document.getElementById('paywallBox');
-            const isSubscribed = localStorage.getItem('subscriptionActive') === 'true';
-            if (isTrialExpired() && !isSubscribed) {
-                chatBox.style.display = 'none';
-                paywallBox.style.display = 'block';
-                // Occasionally show the discounted promo (about 1 in 3 visits)
-                if (Math.random() < 0.33) {
-                    document.getElementById('promoBanner').style.display = 'block';
-                }
+        function handleSearch() {
+            const value = document.getElementById('searchInput').value;
+            if (value.trim()) {
+                searchAndRun(value);
             } else {
-                chatBox.style.display = 'block';
-                paywallBox.style.display = 'none';
-                // Still inside the trial, but out of free questions for today:
-                // keep the chat visible and show the plans underneath it.
-                if (!isSubscribed && getUsageState().count >= DAILY_LIMIT) {
-                    showDailyLimitPlans(false);
-                }
+                clearFilter();
             }
         }
 
-        // Shows the plan cards under the chat when the daily free limit is reached.
-        function showDailyLimitPlans(shouldScroll) {
-            const paywallBox = document.getElementById('paywallBox');
-            if (!paywallBox) return;
-            document.getElementById('paywallIcon').textContent = '📖';
-            document.getElementById('paywallTitle').textContent = 'You have used your free questions for today';
-            document.getElementById('paywallSubtitle').textContent = 'Come back tomorrow, or subscribe for unlimited questions every day.';
-            paywallBox.style.display = 'block';
-            if (shouldScroll) {
-                paywallBox.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            }
-        }
-
-        async function handleSubscribe(plan) {
-        try {
-            const response = await fetch('/api/create-checkout-session', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ plan }),
-            });
-            const data = await response.json();
-
-            if (!response.ok || !data.url) {
-                alert('Sorry, something went wrong starting checkout. Please try again.');
-                return;
-            }
-
-            window.location.href = data.url;
-        } catch (err) {
-            alert('Sorry, something went wrong. Please try again.');
-        }
-    }
-        
-
-        function getUsageState() {
-            const today = new Date().toISOString().slice(0, 10);
-            let raw = localStorage.getItem('aiUsage');
-            let state = raw ? JSON.parse(raw) : { date: today, count: 0 };
-            if (state.date !== today) {
-                state = { date: today, count: 0 };
-            }
-            return state;
-        }
-
-        function saveUsageState(state) {
-            localStorage.setItem('aiUsage', JSON.stringify(state));
-        }
-
-        function updateUsageDisplay() {
-    const state = getUsageState();
-    const remaining = Math.max(0, DAILY_LIMIT - state.count);
-    const el = document.getElementById('aiUsageCount');
-    const isSubscribed = localStorage.getItem('subscriptionActive') === 'true';
-    if (el) el.textContent = isSubscribed
-        ? 'Unlimited questions'
-        : `${remaining}/${DAILY_LIMIT} free questions left today`;
-}
-
-        function clearAiChat() {
-            aiConversation = [];
-            document.getElementById('aiMessages').innerHTML = '';
-        }
-
-        function formatAiText(text) {
-            let safe = text
-                .replace(/&/g, '&amp;')
-                .replace(/</g, '&lt;')
-                .replace(/>/g, '&gt;');
-            safe = safe.replace(/^&gt;\s?(.*)$/gm, '<div style="border-left:3px solid var(--accent-color);padding-left:10px;margin:6px 0;color:#555;">$1</div>');
-            safe = safe.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
-            safe = safe.replace(/\*(.+?)\*/g, '<em>$1</em>');
-            return safe;
-        }
-
-        function appendAiMessage(role, text) {
-            const box = document.getElementById('aiMessages');
-            const bubble = document.createElement('div');
-            bubble.style.display = 'flex';
-            bubble.style.justifyContent = role === 'user' ? 'flex-end' : 'flex-start';
-            bubble.style.marginBottom = '10px';
-            const content = role === 'user'
-                ? text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
-                : formatAiText(text);
-            bubble.innerHTML = `<div style="max-width:82%;background:${role === 'user' ? '#0051ff' : '#f2f4f8'};color:${role === 'user' ? '#fff' : '#111'};border-radius:16px;padding:10px 14px;font-size:14.5px;line-height:1.5;white-space:pre-wrap;">${content}</div>`;
-            box.appendChild(bubble);
-            box.scrollTop = box.scrollHeight;
-        }
-
-        async function sendAiQuestion() {
-            const input = document.getElementById('aiInput');
-            const question = input.value.trim();
-            if (!question) return;
-
-            const state = getUsageState();
-            const isSubscribed = localStorage.getItem('subscriptionActive') === 'true';
-            if (!isSubscribed && state.count >= DAILY_LIMIT) {
-                appendAiMessage('assistant', `You have used all ${DAILY_LIMIT} free questions for today. Please come back tomorrow.`);
-                showDailyLimitPlans(true);
-                return;
-    
-            }
-
-            appendAiMessage('user', question);
-            aiConversation.push({ role: 'user', content: question });
-            input.value = '';
-
-            const loadingId = 'loading-' + Date.now();
-            const box = document.getElementById('aiMessages');
-            const loadingBubble = document.createElement('div');
-            loadingBubble.id = loadingId;
-            loadingBubble.style.cssText = 'display:flex;justify-content:flex-start;margin-bottom:10px;';
-            loadingBubble.innerHTML = `<div style="background:#f2f4f8;border-radius:16px;padding:10px 14px;font-size:14px;color:#777;">Thinking…</div>`;
-            box.appendChild(loadingBubble);
-            box.scrollTop = box.scrollHeight;
-
-            try {
-                const response = await fetch('/api/ask', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ messages: aiConversation }),
-                });
-                const data = await response.json();
-                document.getElementById(loadingId)?.remove();
-
-                if (!response.ok) {
-                    appendAiMessage('assistant', 'Sorry, something went wrong. Please try again.');
-                    return;
-                }
-
-                appendAiMessage('assistant', data.text);
-                aiConversation.push({ role: 'assistant', content: data.text });
-
-                const newState = getUsageState();
-                newState.count += 1;
-                saveUsageState(newState);
-                updateUsageDisplay();
-
-                // Out of free questions after this answer: surface the plans.
-                if (!isSubscribed && newState.count >= DAILY_LIMIT) {
-                    showDailyLimitPlans(false);
-                }
-            } catch (err) {
-                document.getElementById(loadingId)?.remove();
-                appendAiMessage('assistant', 'Sorry, something went wrong. Please try again.');
-            }
+        function clearFilter() {
+            document.getElementById('searchInput').value = '';
+            document.getElementById('activeFilter').classList.remove('show');
+            renderFaqs(faqsData);
         }
 
         // ---- INIT ----
         renderFooter();
         renderFaqs(faqsData);
-        renderPrayers(prayersData);
-        renderDailyPrayer();
-        updateUsageDisplay();
-        checkAccessState();
     </script>
 </body>
 </html>
