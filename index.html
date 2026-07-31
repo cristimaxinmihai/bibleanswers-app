@@ -73,6 +73,7 @@
             color: var(--text-primary);
             font-size: 14px;
             font-weight: 500;
+            cursor: pointer;
         }
         .sign-up-btn {
             background-color: var(--accent-color);
@@ -82,6 +83,125 @@
             border-radius: 20px;
             font-size: 14px;
             font-weight: 500;
+            cursor: pointer;
+        }
+        .account-email {
+            font-size: 13px;
+            color: var(--text-secondary);
+            max-width: 180px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        /* ---- Auth modal ---- */
+        .auth-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(17, 17, 17, 0.45);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        .auth-overlay.show { display: flex; }
+        .auth-modal {
+            background: var(--card-bg);
+            border-radius: 16px;
+            padding: 28px 24px 24px;
+            width: 100%;
+            max-width: 380px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.18);
+            position: relative;
+        }
+        .auth-modal h2 {
+            margin: 0 0 6px;
+            font-size: 22px;
+        }
+        .auth-modal p.auth-sub {
+            margin: 0 0 20px;
+            font-size: 14px;
+            color: var(--text-secondary);
+        }
+        .auth-close {
+            position: absolute;
+            top: 14px;
+            right: 16px;
+            background: none;
+            border: none;
+            font-size: 20px;
+            line-height: 1;
+            color: #999;
+            cursor: pointer;
+            padding: 4px;
+        }
+        .auth-modal label {
+            display: block;
+            font-size: 13px;
+            font-weight: 500;
+            margin-bottom: 6px;
+        }
+        .auth-modal input {
+            width: 100%;
+            border: 1px solid #ddd;
+            border-radius: 10px;
+            padding: 11px 14px;
+            font-size: 15px;
+            margin-bottom: 14px;
+            outline: none;
+            font-family: inherit;
+        }
+        .auth-modal input:focus {
+            border-color: var(--accent-color);
+        }
+        .auth-submit {
+            width: 100%;
+            background: var(--accent-color);
+            color: #fff;
+            border: none;
+            border-radius: 22px;
+            padding: 12px 0;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            font-family: inherit;
+        }
+        .auth-submit:disabled {
+            opacity: 0.6;
+            cursor: default;
+        }
+        .auth-switch {
+            margin: 16px 0 0;
+            font-size: 13.5px;
+            color: var(--text-secondary);
+            text-align: center;
+        }
+        .auth-switch button {
+            background: none;
+            border: none;
+            color: var(--accent-color);
+            font-size: 13.5px;
+            cursor: pointer;
+            text-decoration: underline;
+            padding: 0;
+            font-family: inherit;
+        }
+        .auth-message {
+            display: none;
+            font-size: 13.5px;
+            line-height: 1.5;
+            border-radius: 10px;
+            padding: 10px 12px;
+            margin-bottom: 14px;
+        }
+        .auth-message.show { display: block; }
+        .auth-message.error {
+            background: #fdecec;
+            color: #a12020;
+        }
+        .auth-message.success {
+            background: #eaf6ec;
+            color: #1d6b2c;
         }
         .main-container {
             max-width: 900px;
@@ -298,10 +418,33 @@
             <a onclick="searchAndRun('pray')">Prayer</a>
         </div>
         <div class="header-right">
-            <a href="#" class="sign-in">Sign In</a>
-            <a href="#" class="sign-up-btn">Sign Up</a>
+            <span id="accountEmail" class="account-email" style="display:none;"></span>
+            <a href="#" class="sign-in" id="signInLink" onclick="event.preventDefault(); openAuthModal('signin')">Sign In</a>
+            <a href="#" class="sign-up-btn" id="signUpLink" onclick="event.preventDefault(); openAuthModal('signup')">Sign Up</a>
+            <a href="#" class="sign-in" id="signOutLink" style="display:none;" onclick="event.preventDefault(); handleSignOut()">Sign Out</a>
         </div>
     </header>
+
+    <!-- ---- Auth modal: Sign Up / Sign In ---- -->
+    <div class="auth-overlay" id="authOverlay" onclick="if (event.target === this) closeAuthModal()">
+        <div class="auth-modal" role="dialog" aria-modal="true" aria-labelledby="authTitle">
+            <button class="auth-close" onclick="closeAuthModal()" aria-label="Close">&times;</button>
+            <h2 id="authTitle">Create your account</h2>
+            <p class="auth-sub" id="authSubtitle">Save your place and keep your questions in one account.</p>
+
+            <div class="auth-message" id="authMessage"></div>
+
+            <label for="authEmail">Email</label>
+            <input type="email" id="authEmail" autocomplete="email" placeholder="you@example.com" onkeydown="if(event.key==='Enter') handleAuthSubmit()">
+
+            <label for="authPassword">Password</label>
+            <input type="password" id="authPassword" autocomplete="current-password" placeholder="At least 6 characters" onkeydown="if(event.key==='Enter') handleAuthSubmit()">
+
+            <button class="auth-submit" id="authSubmitBtn" onclick="handleAuthSubmit()">Create account</button>
+
+            <p class="auth-switch" id="authSwitch"></p>
+        </div>
+    </div>
 
     <div class="main-container">
         <h1 class="hero-title">Grow Your Faith Daily</h1>
@@ -414,6 +557,9 @@
         </div>
     </footer>
 
+    <!-- Supabase client library. Must load before the script below. -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
     <script>
         // TEST HELPER: acces prin URL, ex: ?test=expire sau ?test=reset
         const testParam = new URLSearchParams(window.location.search).get('test');
@@ -427,6 +573,130 @@
     if (checkoutParam === 'success') {
       localStorage.setItem('subscriptionActive', 'true');
     }
+
+        // ---- SUPABASE (accounts) ----
+        // The anon/publishable key is meant to be public: it ships in every browser.
+        // Real protection comes from Row Level Security policies on the tables.
+        const SUPABASE_URL = 'https://zacllsdldntmcgttudod.supabase.co';
+        const SUPABASE_ANON_KEY = 'sb_publishable_TJn1trXTRBe6xZLsA6Qy5Q_u_j_fkYh';
+        const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        let authMode = 'signup';
+        let currentUser = null;
+
+        function setAuthMessage(text, kind) {
+            const box = document.getElementById('authMessage');
+            if (!text) {
+                box.className = 'auth-message';
+                box.textContent = '';
+                return;
+            }
+            box.className = 'auth-message show ' + kind;
+            box.textContent = text;
+        }
+
+        function setAuthMode(mode) {
+            authMode = mode;
+            const isSignUp = mode === 'signup';
+            document.getElementById('authTitle').textContent = isSignUp ? 'Create your account' : 'Welcome back';
+            document.getElementById('authSubtitle').textContent = isSignUp
+                ? 'Save your place and keep your questions in one account.'
+                : 'Sign in to pick up where you left off.';
+            document.getElementById('authSubmitBtn').textContent = isSignUp ? 'Create account' : 'Sign in';
+            document.getElementById('authPassword').setAttribute('autocomplete', isSignUp ? 'new-password' : 'current-password');
+            document.getElementById('authSwitch').innerHTML = isSignUp
+                ? 'Already have an account? <button onclick="setAuthMode(\'signin\')">Sign in</button>'
+                : 'New here? <button onclick="setAuthMode(\'signup\')">Create an account</button>';
+            setAuthMessage('');
+        }
+
+        function openAuthModal(mode) {
+            setAuthMode(mode);
+            document.getElementById('authOverlay').classList.add('show');
+            setTimeout(() => document.getElementById('authEmail').focus(), 50);
+        }
+
+        function closeAuthModal() {
+            document.getElementById('authOverlay').classList.remove('show');
+            document.getElementById('authPassword').value = '';
+            setAuthMessage('');
+        }
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') closeAuthModal();
+        });
+
+        async function handleAuthSubmit() {
+            const email = document.getElementById('authEmail').value.trim();
+            const password = document.getElementById('authPassword').value;
+            const btn = document.getElementById('authSubmitBtn');
+
+            if (!email || !password) {
+                setAuthMessage('Enter your email and password to continue.', 'error');
+                return;
+            }
+            if (authMode === 'signup' && password.length < 6) {
+                setAuthMessage('Your password needs at least 6 characters.', 'error');
+                return;
+            }
+
+            btn.disabled = true;
+            const originalLabel = btn.textContent;
+            btn.textContent = 'Working…';
+            setAuthMessage('');
+
+            try {
+                if (authMode === 'signup') {
+                    const { data, error } = await sb.auth.signUp({ email, password });
+                    if (error) {
+                        setAuthMessage(error.message, 'error');
+                    } else if (data.session) {
+                        // Email confirmation is off: the user is signed in right away.
+                        closeAuthModal();
+                    } else {
+                        setAuthMessage('Check your email to confirm your account, then sign in.', 'success');
+                        document.getElementById('authPassword').value = '';
+                    }
+                } else {
+                    const { error } = await sb.auth.signInWithPassword({ email, password });
+                    if (error) {
+                        setAuthMessage(error.message, 'error');
+                    } else {
+                        closeAuthModal();
+                    }
+                }
+            } catch (err) {
+                setAuthMessage('Something went wrong. Please try again.', 'error');
+            }
+
+            btn.disabled = false;
+            btn.textContent = originalLabel;
+        }
+
+        async function handleSignOut() {
+            await sb.auth.signOut();
+        }
+
+        function updateAuthUI(session) {
+            currentUser = session ? session.user : null;
+            const emailEl = document.getElementById('accountEmail');
+            const signIn = document.getElementById('signInLink');
+            const signUp = document.getElementById('signUpLink');
+            const signOut = document.getElementById('signOutLink');
+
+            if (currentUser) {
+                emailEl.textContent = currentUser.email;
+                emailEl.style.display = 'inline';
+                signIn.style.display = 'none';
+                signUp.style.display = 'none';
+                signOut.style.display = 'inline';
+            } else {
+                emailEl.style.display = 'none';
+                signIn.style.display = 'inline';
+                signUp.style.display = 'inline';
+                signOut.style.display = 'none';
+            }
+        }
 
         // ---- DATA ----
         const faqsData = [
@@ -1059,6 +1329,10 @@
         renderDailyPrayer();
         updateUsageDisplay();
         checkAccessState();
+
+        // Restore an existing session on load, then follow sign in / sign out.
+        sb.auth.getSession().then(({ data }) => updateAuthUI(data.session));
+        sb.auth.onAuthStateChange((_event, session) => updateAuthUI(session));
     </script>
 </body>
 </html>
