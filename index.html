@@ -1189,24 +1189,35 @@
         }
 
         async function handleSubscribe(plan) {
-        try {
-            const response = await fetch('/api/create-checkout-session', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ plan }),
-            });
-            const data = await response.json();
-
-            if (!response.ok || !data.url) {
-                alert('Sorry, something went wrong starting checkout. Please try again.');
+            // A subscription belongs to an account, so ask for one before paying.
+            if (!currentUser) {
+                openAuthModal('signup');
+                setAuthMessage('Create an account first, so your subscription is saved to it.', 'success');
                 return;
             }
 
-            window.location.href = data.url;
-        } catch (err) {
-            alert('Sorry, something went wrong. Please try again.');
+            try {
+                const response = await fetch('/api/create-checkout-session', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        plan,
+                        userId: currentUser.id,
+                        email: currentUser.email,
+                    }),
+                });
+                const data = await response.json();
+
+                if (!response.ok || !data.url) {
+                    alert('Sorry, something went wrong starting checkout. Please try again.');
+                    return;
+                }
+
+                window.location.href = data.url;
+            } catch (err) {
+                alert('Sorry, something went wrong. Please try again.');
+            }
         }
-    }
         
 
         function getUsageState() {
