@@ -1,6 +1,11 @@
 // api/create-checkout-session.js
 // Creează o sesiune de Stripe Checkout pentru planul ales (weekly/monthly/yearly)
 // și returnează URL-ul către care browserul trebuie redirecționat.
+//
+// Sesiunea poartă acum identitatea utilizatorului Supabase, în două locuri:
+//   - client_reference_id         → ajunge în checkout.session.completed
+//   - subscription_data[metadata] → rămâne lipit de abonament, deci ajunge și în
+//                                   customer.subscription.updated / .deleted
 
 const PRICE_IDS = {
   weekly: 'price_1Tyc0OJc0oLZr7dskStORKLt',
@@ -16,11 +21,17 @@ module.exports = async (req, res) => {
   }
 
   try {
-    const { plan } = req.body;
-    const priceId = PRICE_IDS[plan];
+    const { plan, userId, email } = req.body;
 
+    const priceId = PRICE_IDS[plan];
     if (!priceId) {
       res.status(400).json({ error: 'Invalid plan' });
+      return;
+    }
+
+    // Fără cont nu avem cui atribui abonamentul.
+    if (!userId) {
+      res.status(400).json({ error: 'Sign in before subscribing' });
       return;
     }
 
@@ -38,6 +49,13 @@ module.exports = async (req, res) => {
     params.append('line_items[0][quantity]', '1');
     params.append('success_url', `${origin}/?checkout=success`);
     params.append('cancel_url', `${origin}/?checkout=cancel`);
+
+    // Cine plătește.
+    params.append('client_reference_id', userId);
+    params.append('subscription_data[metadata][supabase_user_id]', userId);
+    if (email) {
+      params.append('customer_email', email);
+    }
 
     const response = await fetch('https://api.stripe.com/v1/checkout/sessions', {
       method: 'POST',
