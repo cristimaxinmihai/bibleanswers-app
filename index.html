@@ -1188,6 +1188,19 @@
             }
         }
 
+        // Shown when the server says the 7-day trial is over.
+        function showTrialOverPaywall() {
+            const chatBox = document.getElementById('aiChatBox');
+            const paywallBox = document.getElementById('paywallBox');
+            if (!paywallBox) return;
+            document.getElementById('paywallIcon').textContent = '🔒';
+            document.getElementById('paywallTitle').textContent = 'Your free trial has ended';
+            document.getElementById('paywallSubtitle').textContent = 'Subscribe to keep asking BibleAnswers AI unlimited questions, every day.';
+            paywallBox.style.display = 'block';
+            if (chatBox) chatBox.style.display = 'none';
+            paywallBox.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+
         async function handleSubscribe(plan) {
             // A subscription belongs to an account, so ask for one before paying.
             if (!currentUser) {
@@ -1279,14 +1292,16 @@
             const question = input.value.trim();
             if (!question) return;
 
-            const state = getUsageState();
-            const isSubscribed = localStorage.getItem('subscriptionActive') === 'true';
-            if (!isSubscribed && state.count >= DAILY_LIMIT) {
-                appendAiMessage('assistant', `You have used all ${DAILY_LIMIT} free questions for today. Please come back tomorrow.`);
-                showDailyLimitPlans(true);
+            // The server decides who may ask; it needs a signed-in session.
+            const { data: sessionData } = await sb.auth.getSession();
+            const accessToken = sessionData.session ? sessionData.session.access_token : null;
+            if (!accessToken) {
+                openAuthModal('signup');
+                setAuthMessage('Create a free account to start asking questions.', 'success');
                 return;
-    
             }
+
+            const isSubscribed = localStorage.getItem('subscriptionActive') === 'true';
 
             appendAiMessage('user', question);
             aiConversation.push({ role: 'user', content: question });
@@ -1304,14 +1319,31 @@
             try {
                 const response = await fetch('/api/ask', {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': 'Bearer ' + accessToken,
+                    },
                     body: JSON.stringify({ messages: aiConversation }),
                 });
                 const data = await response.json();
                 document.getElementById(loadingId)?.remove();
 
                 if (!response.ok) {
-                    appendAiMessage('assistant', 'Sorry, something went wrong. Please try again.');
+                    // The question was refused, so drop it from the history.
+                    aiConversation.pop();
+
+                    if (response.status === 401) {
+                        appendAiMessage('assistant', 'Please sign in again to continue.');
+                        openAuthModal('signin');
+                    } else if (response.status === 402) {
+                        appendAiMessage('assistant', 'Your free trial has ended. Subscribe to keep asking questions.');
+                        showTrialOverPaywall();
+                    } else if (response.status === 429) {
+                        appendAiMessage('assistant', `You have used all ${DAILY_LIMIT} free questions for today. Please come back tomorrow.`);
+                        showDailyLimitPlans(true);
+                    } else {
+                        appendAiMessage('assistant', 'Sorry, something went wrong. Please try again.');
+                    }
                     return;
                 }
 
