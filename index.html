@@ -561,18 +561,19 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
     <script>
-        // TEST HELPER: acces prin URL, ex: ?test=expire sau ?test=reset
+        // TEST HELPER: ?test=reset clears anything this browser still keeps locally.
         const testParam = new URLSearchParams(window.location.search).get('test');
-        if (testParam === 'expire') {
-            localStorage.setItem('trialStart', '2020-01-01');
-        }
         if (testParam === 'reset') {
             localStorage.clear();
         }
+
+        // Left over from the old browser-side gate. Access and counting now live on
+        // the server, so these keys mean nothing and are removed on every load.
+        localStorage.removeItem('subscriptionActive');
+        localStorage.removeItem('trialStart');
+        localStorage.removeItem('aiUsage');
+
         const checkoutParam = new URLSearchParams(window.location.search).get('checkout');
-    if (checkoutParam === 'success') {
-      localStorage.setItem('subscriptionActive', 'true');
-    }
 
         // ---- SUPABASE (accounts) ----
         // The anon/publishable key is meant to be public: it ships in every browser.
@@ -583,6 +584,63 @@
 
         let authMode = 'signup';
         let currentUser = null;
+
+        // ---- ACCOUNT STATE ----
+        // Everything the page says about access is read from the profiles table.
+        // The browser only mirrors a decision the server already made.
+        const emptyAccountState = {
+            loaded: false,
+            subscribed: false,
+            questionsUsedToday: 0,
+            trialDaysElapsed: 0,
+            trialOver: false,
+        };
+        let accountState = Object.assign({}, emptyAccountState);
+
+        // The server counts days in UTC, so the page must use the same calendar.
+        function todayUtc() {
+            return new Date().toISOString().slice(0, 10);
+        }
+
+        async function loadAccountState() {
+            if (!currentUser) {
+                accountState = Object.assign({}, emptyAccountState);
+                return;
+            }
+            try {
+                const { data, error } = await sb
+                    .from('profiles')
+                    .select('subscription_status, created_at, questions_used_today, questions_day')
+                    .eq('id', currentUser.id)
+                    .single();
+
+                if (error || !data) {
+                    accountState = Object.assign({}, emptyAccountState);
+                    return;
+                }
+
+                const subscribed = data.subscription_status === 'active' || data.subscription_status === 'trialing';
+                const used = data.questions_day === todayUtc() ? (data.questions_used_today || 0) : 0;
+                const started = data.created_at ? new Date(data.created_at) : new Date();
+                const daysElapsed = Math.floor((Date.now() - started.getTime()) / 86400000);
+
+                accountState = {
+                    loaded: true,
+                    subscribed: subscribed,
+                    questionsUsedToday: used,
+                    trialDaysElapsed: daysElapsed,
+                    trialOver: !subscribed && daysElapsed >= TRIAL_DAYS,
+                };
+            } catch (err) {
+                accountState = Object.assign({}, emptyAccountState);
+            }
+        }
+
+        async function refreshAccountState() {
+            await loadAccountState();
+            updateUsageDisplay();
+            checkAccessState();
+        }
 
         function setAuthMessage(text, kind) {
             const box = document.getElementById('authMessage');
@@ -696,6 +754,9 @@
                 signUp.style.display = 'inline';
                 signOut.style.display = 'none';
             }
+
+            // Whoever is signed in now, ask the server what they are allowed to do.
+            refreshAccountState();
         }
 
         // ---- DATA ----
@@ -1133,45 +1194,48 @@
         }
 
         // ---- AI CHAT (calls our secure backend, never exposes any API key) ----
+        // These two numbers must match the ones in api/ask.js. The server enforces
+        // them; the copies here only decide what the page says.
         const DAILY_LIMIT = 5;
         const TRIAL_DAYS = 7;
+        // How many past messages travel with each question (8 exchanges).
+        const HISTORY_LIMIT = 16;
         let aiConversation = [];
-
-        function getTrialDaysElapsed() {
-            let start = localStorage.getItem('trialStart');
-            if (!start) {
-                start = new Date().toISOString().slice(0, 10);
-                localStorage.setItem('trialStart', start);
-            }
-            const startDate = new Date(start);
-            const today = new Date();
-            const diffDays = Math.floor((today - startDate) / (1000 * 60 * 60 * 24));
-            return diffDays;
-        }
-
-        function isTrialExpired() {
-            return getTrialDaysElapsed() >= TRIAL_DAYS;
-        }
 
         function checkAccessState() {
             const chatBox = document.getElementById('aiChatBox');
             const paywallBox = document.getElementById('paywallBox');
-            const isSubscribed = localStorage.getItem('subscriptionActive') === 'true';
-            if (isTrialExpired() && !isSubscribed) {
-                chatBox.style.display = 'none';
-                paywallBox.style.display = 'block';
+            if (!chatBox || !paywallBox) return;
+
+            // Signed out: the chat stays visible, and sending asks for an account.
+            if (!currentUser) {
+                chatBox.style.display = 'block';
+                paywallBox.style.display = 'none';
+                return;
+            }
+
+            if (accountState.subscribed) {
+                chatBox.style.display = 'block';
+                paywallBox.style.display = 'none';
+                return;
+            }
+
+            if (accountState.trialOver) {
+                showTrialOverPaywall(false);
                 // Occasionally show the discounted promo (about 1 in 3 visits)
                 if (Math.random() < 0.33) {
                     document.getElementById('promoBanner').style.display = 'block';
                 }
+                return;
+            }
+
+            chatBox.style.display = 'block';
+            // Still inside the trial, but out of free questions for today:
+            // keep the chat visible and show the plans underneath it.
+            if (accountState.questionsUsedToday >= DAILY_LIMIT) {
+                showDailyLimitPlans(false);
             } else {
-                chatBox.style.display = 'block';
                 paywallBox.style.display = 'none';
-                // Still inside the trial, but out of free questions for today:
-                // keep the chat visible and show the plans underneath it.
-                if (!isSubscribed && getUsageState().count >= DAILY_LIMIT) {
-                    showDailyLimitPlans(false);
-                }
             }
         }
 
@@ -1188,8 +1252,8 @@
             }
         }
 
-        // Shown when the server says the 7-day trial is over.
-        function showTrialOverPaywall() {
+        // Shown when the trial is over: the chat goes away entirely.
+        function showTrialOverPaywall(shouldScroll) {
             const chatBox = document.getElementById('aiChatBox');
             const paywallBox = document.getElementById('paywallBox');
             if (!paywallBox) return;
@@ -1198,7 +1262,9 @@
             document.getElementById('paywallSubtitle').textContent = 'Subscribe to keep asking BibleAnswers AI unlimited questions, every day.';
             paywallBox.style.display = 'block';
             if (chatBox) chatBox.style.display = 'none';
-            paywallBox.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            if (shouldScroll) {
+                paywallBox.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
         }
 
         async function handleSubscribe(plan) {
@@ -1231,31 +1297,26 @@
                 alert('Sorry, something went wrong. Please try again.');
             }
         }
-        
-
-        function getUsageState() {
-            const today = new Date().toISOString().slice(0, 10);
-            let raw = localStorage.getItem('aiUsage');
-            let state = raw ? JSON.parse(raw) : { date: today, count: 0 };
-            if (state.date !== today) {
-                state = { date: today, count: 0 };
-            }
-            return state;
-        }
-
-        function saveUsageState(state) {
-            localStorage.setItem('aiUsage', JSON.stringify(state));
-        }
 
         function updateUsageDisplay() {
-    const state = getUsageState();
-    const remaining = Math.max(0, DAILY_LIMIT - state.count);
-    const el = document.getElementById('aiUsageCount');
-    const isSubscribed = localStorage.getItem('subscriptionActive') === 'true';
-    if (el) el.textContent = isSubscribed
-        ? 'Unlimited questions'
-        : `${remaining}/${DAILY_LIMIT} free questions left today`;
-}
+            const el = document.getElementById('aiUsageCount');
+            if (!el) return;
+
+            if (!currentUser) {
+                el.textContent = `${DAILY_LIMIT} free questions a day with a free account`;
+                return;
+            }
+            if (accountState.subscribed) {
+                el.textContent = 'Unlimited questions';
+                return;
+            }
+            if (accountState.trialOver) {
+                el.textContent = 'Your free trial has ended';
+                return;
+            }
+            const remaining = Math.max(0, DAILY_LIMIT - accountState.questionsUsedToday);
+            el.textContent = `${remaining}/${DAILY_LIMIT} free questions left today`;
+        }
 
         function clearAiChat() {
             aiConversation = [];
@@ -1301,8 +1362,6 @@
                 return;
             }
 
-            const isSubscribed = localStorage.getItem('subscriptionActive') === 'true';
-
             appendAiMessage('user', question);
             aiConversation.push({ role: 'user', content: question });
             input.value = '';
@@ -1323,7 +1382,8 @@
                         'Content-Type': 'application/json',
                         'Authorization': 'Bearer ' + accessToken,
                     },
-                    body: JSON.stringify({ messages: aiConversation }),
+                    // Only the recent history travels, so a long session stays cheap.
+                    body: JSON.stringify({ messages: aiConversation.slice(-HISTORY_LIMIT) }),
                 });
                 const data = await response.json();
                 document.getElementById(loadingId)?.remove();
@@ -1337,9 +1397,13 @@
                         openAuthModal('signin');
                     } else if (response.status === 402) {
                         appendAiMessage('assistant', 'Your free trial has ended. Subscribe to keep asking questions.');
-                        showTrialOverPaywall();
+                        accountState.trialOver = true;
+                        updateUsageDisplay();
+                        showTrialOverPaywall(true);
                     } else if (response.status === 429) {
                         appendAiMessage('assistant', `You have used all ${DAILY_LIMIT} free questions for today. Please come back tomorrow.`);
+                        accountState.questionsUsedToday = DAILY_LIMIT;
+                        updateUsageDisplay();
                         showDailyLimitPlans(true);
                     } else {
                         appendAiMessage('assistant', 'Sorry, something went wrong. Please try again.');
@@ -1350,13 +1414,12 @@
                 appendAiMessage('assistant', data.text);
                 aiConversation.push({ role: 'assistant', content: data.text });
 
-                const newState = getUsageState();
-                newState.count += 1;
-                saveUsageState(newState);
+                // The server already counted this one; keep the page in step.
+                accountState.questionsUsedToday += 1;
                 updateUsageDisplay();
 
                 // Out of free questions after this answer: surface the plans.
-                if (!isSubscribed && newState.count >= DAILY_LIMIT) {
+                if (!accountState.subscribed && accountState.questionsUsedToday >= DAILY_LIMIT) {
                     showDailyLimitPlans(false);
                 }
             } catch (err) {
@@ -1374,8 +1437,22 @@
         checkAccessState();
 
         // Restore an existing session on load, then follow sign in / sign out.
+        // updateAuthUI also refreshes the account state from the server.
         sb.auth.getSession().then(({ data }) => updateAuthUI(data.session));
         sb.auth.onAuthStateChange((_event, session) => updateAuthUI(session));
+
+        // Back from Stripe: the webhook may take a moment to mark the profile,
+        // so check a few times instead of trusting the URL.
+        if (checkoutParam === 'success') {
+            let checkoutTries = 0;
+            const checkoutPoll = setInterval(async () => {
+                checkoutTries += 1;
+                await refreshAccountState();
+                if (accountState.subscribed || checkoutTries >= 5) {
+                    clearInterval(checkoutPoll);
+                }
+            }, 2000);
+        }
     </script>
 </body>
 </html>
