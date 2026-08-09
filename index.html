@@ -1389,15 +1389,10 @@ window.va = window.va || function () { (window.vaq = window.vaq || []).push(argu
             const question = input.value.trim();
             if (!question) return;
 
-            // The server decides who may ask; it needs a signed-in session.
+            // Signed-out visitors get one question a day; the server decides.
             const { data: sessionData } = await sb.auth.getSession();
             const accessToken = sessionData.session ? sessionData.session.access_token : null;
-            if (!accessToken) {
-                openAuthModal('signup');
-                setAuthMessage('Create a free account to start asking questions.', 'success');
-                return;
-            }
-
+            
             appendAiMessage('user', question);
             aiConversation.push({ role: 'user', content: question });
             input.value = '';
@@ -1416,7 +1411,7 @@ window.va = window.va || function () { (window.vaq = window.vaq || []).push(argu
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
-                        'Authorization': 'Bearer ' + accessToken,
+                        ...(accessToken ? { 'Authorization': 'Bearer ' + accessToken } : {}),
                     },
                     // Only the recent history travels, so a long session stays cheap.
                     body: JSON.stringify({ messages: aiConversation.slice(-HISTORY_LIMIT) }),
@@ -1429,8 +1424,8 @@ window.va = window.va || function () { (window.vaq = window.vaq || []).push(argu
                     aiConversation.pop();
 
                     if (response.status === 401) {
-                        appendAiMessage('assistant', 'Please sign in again to continue.');
-                        openAuthModal('signin');
+                        appendAiMessage('assistant', currentUser ? 'Please sign in again to continue.' : 'Create a free account to keep asking - it takes a few seconds.');
+                        if (currentUser) { openAuthModal('signin'); } else { openAuthModal('signup'); setAuthMessage('Create a free account to keep going - 5 free questions a day.', 'success'); }
                     } else if (response.status === 402) {
                         appendAiMessage('assistant', 'Your free trial has ended. Subscribe to keep asking questions.');
                         accountState.trialOver = true;
