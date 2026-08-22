@@ -1507,5 +1507,120 @@ src="https://www.facebook.com/tr?id=1298632592161391&ev=PageView&noscript=1"
             }, 2000);
         }
     </script>
+        <!-- ---- ADD TO HOME SCREEN BANNER ---- -->
+    <style>
+        #installBanner {
+            position: fixed;
+            left: 12px;
+            right: 12px;
+            bottom: 12px;
+            z-index: 900;
+            display: none;
+            align-items: center;
+            gap: 12px;
+            background: #fff;
+            border: 1px solid var(--border-color);
+            border-radius: 14px;
+            box-shadow: 0 6px 24px rgba(0,0,0,0.14);
+            padding: 14px 40px 14px 14px;
+        }
+        #installBanner.show { display: flex; }
+        #installBannerIcon { width: 40px; height: 40px; border-radius: 9px; flex-shrink: 0; }
+        #installBannerText { flex: 1; font-size: 13.5px; line-height: 1.45; color: var(--text-primary); }
+        #installBannerText strong { display: block; font-size: 14.5px; margin-bottom: 2px; }
+        #installBannerAction { display: none; background: var(--accent-color); color: #fff; border: none; border-radius: 20px; padding: 9px 16px; font-size: 13px; font-weight: 600; cursor: pointer; flex-shrink: 0; font-family: inherit; }
+        #installBannerClose { position: absolute; top: 6px; right: 8px; background: none; border: none; font-size: 20px; line-height: 1; color: #999; cursor: pointer; padding: 4px; }
+    </style>
+
+    <div id="installBanner">
+        <img id="installBannerIcon" src="/apple-touch-icon.png" alt="">
+        <div id="installBannerText"></div>
+        <button id="installBannerAction" onclick="handleInstallAction()">Install</button>
+        <button id="installBannerClose" onclick="dismissInstallBanner()" aria-label="Close">&times;</button>
+    </div>
+
+    <script>
+        const INSTALL_DISMISSED_KEY = 'installBannerDismissed';
+        let deferredInstallPrompt = null;
+        let installBannerShown = false;
+
+        function isStandaloneApp() {
+            return window.navigator.standalone === true ||
+                (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches);
+        }
+
+        function installEnvironment() {
+            const ua = navigator.userAgent || '';
+            const isIOS = /iPhone|iPad|iPod/i.test(ua);
+            const isAndroid = /Android/i.test(ua);
+            if (!isIOS && !isAndroid) return 'none';
+            if (isAndroid) return 'android';
+            const inApp = /FBAN|FBAV|FB_IAB|Instagram|TikTok|musical_ly|Bytedance|Snapchat|Pinterest|Line/i.test(ua) || !/Safari/i.test(ua);
+            return inApp ? 'ios-inapp' : 'ios-safari';
+        }
+
+        window.addEventListener('beforeinstallprompt', function (e) {
+            e.preventDefault();
+            deferredInstallPrompt = e;
+        });
+
+        function maybeShowInstallBanner() {
+            if (installBannerShown) return;
+            if (isStandaloneApp()) return;
+            if (localStorage.getItem(INSTALL_DISMISSED_KEY) === 'yes') return;
+
+            const env = installEnvironment();
+            if (env === 'none') return;
+            if (env === 'android' && !deferredInstallPrompt) return;
+
+            const banner = document.getElementById('installBanner');
+            const textEl = document.getElementById('installBannerText');
+            const actionBtn = document.getElementById('installBannerAction');
+            if (!banner || !textEl) return;
+
+            if (env === 'ios-safari') {
+                textEl.innerHTML = '<strong>Keep BibleAnswers one tap away</strong>Tap the Share button, then Add to Home Screen.';
+                actionBtn.style.display = 'none';
+            } else if (env === 'ios-inapp') {
+                textEl.innerHTML = '<strong>Keep BibleAnswers one tap away</strong>Tap the menu, choose Open in Safari, then Share and Add to Home Screen.';
+                actionBtn.style.display = 'none';
+            } else {
+                textEl.innerHTML = '<strong>Keep BibleAnswers one tap away</strong>Add it to your home screen for one-tap access.';
+                actionBtn.style.display = 'inline-block';
+            }
+
+            banner.classList.add('show');
+            installBannerShown = true;
+        }
+
+        function dismissInstallBanner() {
+            const banner = document.getElementById('installBanner');
+            if (banner) banner.classList.remove('show');
+            try { localStorage.setItem(INSTALL_DISMISSED_KEY, 'yes'); } catch (err) {}
+        }
+
+        async function handleInstallAction() {
+            if (!deferredInstallPrompt) { dismissInstallBanner(); return; }
+            deferredInstallPrompt.prompt();
+            try { await deferredInstallPrompt.userChoice; } catch (err) {}
+            deferredInstallPrompt = null;
+            dismissInstallBanner();
+        }
+
+        const aiMessagesEl = document.getElementById('aiMessages');
+        if (aiMessagesEl && window.MutationObserver) {
+            new MutationObserver(function (records) {
+                records.forEach(function (r) {
+                    r.addedNodes.forEach(function (node) {
+                        if (node.nodeType !== 1) return;
+                        if (node.id) return;
+                        if (node.style && node.style.justifyContent === 'flex-start') {
+                            setTimeout(maybeShowInstallBanner, 1500);
+                        }
+                    });
+                });
+            }).observe(aiMessagesEl, { childList: true });
+        }
+    </script>
 </body>
 </html>
