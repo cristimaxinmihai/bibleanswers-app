@@ -728,11 +728,15 @@ src="https://www.facebook.com/tr?id=1298632592161391&ev=PageView&noscript=1"
         function openAuthModal(mode) {
             setAuthMode(mode);
             document.getElementById('authOverlay').classList.add('show');
+                        const ib = document.getElementById('installBanner');
+            if (ib) ib.style.visibility = 'hidden';
             setTimeout(() => document.getElementById('authEmail').focus(), 50);
         }
 
         function closeAuthModal() {
             document.getElementById('authOverlay').classList.remove('show');
+                        const ib2 = document.getElementById('installBanner');
+            if (ib2) ib2.style.visibility = '';
             document.getElementById('authPassword').value = '';
             setAuthMessage('');
         }
@@ -1524,7 +1528,7 @@ src="https://www.facebook.com/tr?id=1298632592161391&ev=PageView&noscript=1"
             box-shadow: 0 6px 24px rgba(0,0,0,0.14);
             padding: 14px 40px 14px 14px;
         }
-        #installBanner.show { display: flex; }
+                #installBanner.show { display: flex; }         body.install-banner-open { padding-bottom: 130px; }
         #installBannerIcon { width: 40px; height: 40px; border-radius: 9px; flex-shrink: 0; }
         #installBannerText { flex: 1; font-size: 13.5px; line-height: 1.45; color: var(--text-primary); }
         #installBannerText strong { display: block; font-size: 14.5px; margin-bottom: 2px; }
@@ -1590,12 +1594,14 @@ src="https://www.facebook.com/tr?id=1298632592161391&ev=PageView&noscript=1"
             }
 
             banner.classList.add('show');
+                        document.body.classList.add('install-banner-open');
             installBannerShown = true;
         }
 
         function dismissInstallBanner() {
             const banner = document.getElementById('installBanner');
             if (banner) banner.classList.remove('show');
+                        document.body.classList.remove('install-banner-open');
             try { localStorage.setItem(INSTALL_DISMISSED_KEY, 'yes'); } catch (err) {}
         }
 
