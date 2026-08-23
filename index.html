@@ -818,6 +818,18 @@ src="https://www.facebook.com/tr?id=1298632592161391&ev=PageView&noscript=1"
 
             // Whoever is signed in now, ask the server what they are allowed to do.
             refreshAccountState();
+            
+            // Chat history follows the account, not the browser.
+            if (currentUser) {
+                if (chatHistoryLoadedFor !== currentUser.id) {
+                    chatHistoryLoadedFor = currentUser.id;
+                    loadChatHistory();
+                }
+            } else if (chatHistoryLoadedFor) {
+                chatHistoryLoadedFor = null;
+                aiConversation = [];
+                document.getElementById('aiMessages').innerHTML = '';
+            }
         }
 
         // ---- DATA ----
@@ -1262,6 +1274,53 @@ src="https://www.facebook.com/tr?id=1298632592161391&ev=PageView&noscript=1"
         // How many past messages travel with each question (8 exchanges).
         const HISTORY_LIMIT = 16;
         let aiConversation = [];
+        
+        // ---- CHAT HISTORY (chat_messages) ----
+        // Only signed-in users have rows: RLS ties every row to auth.uid().
+        // How many past messages come back on load. Storage can grow for years,
+        // but what travels to the AI is capped separately by HISTORY_LIMIT.
+        const CHAT_HISTORY_LIMIT = 20;
+        let chatHistoryLoadedFor = null;
+
+        // Best effort: if saving fails, the conversation carries on as normal.
+        async function saveChatMessage(role, content) {
+            if (!currentUser) return;
+            try {
+                await sb.from('chat_messages').insert({
+                    user_id: currentUser.id,
+                    role: role,
+                    content: content,
+                });
+            } catch (err) {
+                // Persistence must never break the chat.
+            }
+        }
+
+        async function loadChatHistory() {
+            if (!currentUser) return;
+            try {
+                const { data, error } = await sb
+                    .from('chat_messages')
+                    .select('role, content')
+                    .eq('user_id', currentUser.id)
+                    .order('created_at', { ascending: false })
+                    .limit(CHAT_HISTORY_LIMIT);
+
+                if (error || !data || !data.length) return;
+
+                const rows = data.slice().reverse();
+                aiConversation = rows.map(function (r) {
+                    return { role: r.role, content: r.content };
+                });
+                const box = document.getElementById('aiMessages');
+                if (box) box.innerHTML = '';
+                rows.forEach(function (r, i) {
+                    appendAiMessage(r.role, r.content, i);
+                });
+            } catch (err) {
+                // A missing history is not worth breaking the page over.
+            }
+        }
 
         function checkAccessState() {
             const chatBox = document.getElementById('aiChatBox');
@@ -1283,10 +1342,7 @@ src="https://www.facebook.com/tr?id=1298632592161391&ev=PageView&noscript=1"
 
             if (accountState.trialOver) {
                 showTrialOverPaywall(false);
-                // Occasionally show the discounted promo (about 1 in 3 visits)
-                if (Math.random() < 0.33) {
-                    document.getElementById('promoBanner').style.display = 'block';
-                }
+            
                 return;
             }
 
@@ -1379,9 +1435,17 @@ src="https://www.facebook.com/tr?id=1298632592161391&ev=PageView&noscript=1"
             el.textContent = `${remaining}/${DAILY_LIMIT} free questions left today`;
         }
 
-        function clearAiChat() {
+                async function clearAiChat() {
+            // Clearing now also deletes the saved history, so ask first.
+            if (currentUser && !confirm('Clear this conversation? Your saved history will be deleted.')) return;
             aiConversation = [];
             document.getElementById('aiMessages').innerHTML = '';
+            if (!currentUser) return;
+            try {
+                await sb.from('chat_messages').delete().eq('user_id', currentUser.id);
+            } catch (err) {
+                // The screen is already clear; a failed delete can wait.
+            }
         }
 
         function formatAiText(text) {
@@ -1395,9 +1459,12 @@ src="https://www.facebook.com/tr?id=1298632592161391&ev=PageView&noscript=1"
             return safe;
         }
 
-        function appendAiMessage(role, text) {
+        function appendAiMessage(role, text, restoredIndex) {
             const box = document.getElementById('aiMessages');
             const bubble = document.createElement('div');
+                        // Restored history carries an id, so the install banner - which watches
+            // for new answers - does not fire on page load.
+            if (typeof restoredIndex === 'number') bubble.id = 'restored-' + restoredIndex;
             bubble.style.display = 'flex';
             bubble.style.justifyContent = role === 'user' ? 'flex-end' : 'flex-start';
             bubble.style.marginBottom = '10px';
@@ -1469,6 +1536,9 @@ src="https://www.facebook.com/tr?id=1298632592161391&ev=PageView&noscript=1"
 
                 appendAiMessage('assistant', data.text);
                 aiConversation.push({ role: 'assistant', content: data.text });
+                                // Saved only after the server accepted the question.
+                saveChatMessage('user', question);
+                saveChatMessage('assistant', data.text);
                 if (window.fbq) fbq('trackCustom', 'AskedQuestion');
 
                 // The server already counted this one; keep the page in step.
