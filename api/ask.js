@@ -20,7 +20,7 @@ export default async function handler(req, res) {
   const isAnon = !token;
 
   const ip = (req.headers['x-forwarded-for'] || '').split(',')[0].trim();
-  const ipHash = crypto.createHash('sha256').update('bibleanswers|' + ip).digest('hex');
+  const ipHash = crypto.createHash('sha256').update((process.env.IP_HASH_SALT || 'bibleanswers') + '|' + ip).digest('hex');
   const anonToday = new Date().toISOString().slice(0, 10);
 
   if (isAnon && !ip) {
