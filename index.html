@@ -764,6 +764,9 @@ src="https://www.facebook.com/tr?id=1298632592161391&ev=PageView&noscript=1"
             try {
                 if (authMode === 'signup') {
                     const { data, error } = await sb.auth.signUp({ email, password });
+                    if (!error && data?.user?.identities?.length && typeof fbq === 'function') {
+    fbq('track', 'CompleteRegistration');
+}
                     if (error) {
                         setAuthMessage(error.message, 'error');
                     } else if (data.session) {
