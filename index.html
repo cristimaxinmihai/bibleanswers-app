@@ -769,7 +769,7 @@ src="https://www.facebook.com/tr?id=1298632592161391&ev=PageView&noscript=1"
 }
                     if (error) {
                         setAuthMessage(error.message, 'error');
-                    } else if (data.session) {
+                    } else if (data.session) { if (pendingQuestion) { const q = pendingQuestion; pendingQuestion = null; const mb = document.getElementById('aiMessages'); if (mb && mb.lastChild) mb.removeChild(mb.lastChild); document.getElementById('aiInput').value = q; setTimeout(function () { sendAiQuestion(); }, 800); }
                         // Email confirmation is off: the user is signed in right away.
                         closeAuthModal();
                     } else {
@@ -1273,7 +1273,7 @@ src="https://www.facebook.com/tr?id=1298632592161391&ev=PageView&noscript=1"
         const TRIAL_DAYS = 7;
         // How many past messages travel with each question (8 exchanges).
         const HISTORY_LIMIT = 16;
-        let aiConversation = [];
+        let aiConversation = []; let pendingQuestion = null;
         
         // ---- CHAT HISTORY (chat_messages) ----
         // Only signed-in users have rows: RLS ties every row to auth.uid().
@@ -1513,7 +1513,7 @@ src="https://www.facebook.com/tr?id=1298632592161391&ev=PageView&noscript=1"
 
                 if (!response.ok) {
                     // The question was refused, so drop it from the history.
-                    aiConversation.pop();
+                    aiConversation.pop(); if (response.status === 401 && !currentUser) { pendingQuestion = question; }
 
                     if (response.status === 401) {
                         appendAiMessage('assistant', currentUser ? 'Please sign in again to continue.' : 'Create a free account to keep asking - it takes a few seconds.');
