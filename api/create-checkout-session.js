@@ -10,8 +10,7 @@
 const PRICE_IDS = {
   weekly: 'price_1Tyc0OJc0oLZr7dskStORKLt',
   monthly: 'price_1Tyc0SJc0oLZr7dsogTpJB6A',
-  yearly: 'price_1Tyc0TJc0oLZr7dsbPHo9ukl',
-  'yearly-promo': 'price_1Tyc0TJc0oLZr7dsbPHo9ukl', // acelasi pret yearly pentru promo
+    yearly: 'price_1U7chfJc0oLZr7dsuUL35ety',
 };
 
 module.exports = async (req, res) => {
