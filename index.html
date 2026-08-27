@@ -1273,7 +1273,8 @@ src="https://www.facebook.com/tr?id=1298632592161391&ev=PageView&noscript=1"
         const TRIAL_DAYS = 7;
         // How many past messages travel with each question (8 exchanges).
         const HISTORY_LIMIT = 16;
-        let aiConversation = []; let pendingQuestion = null;
+        let aiConversation = []; let pendingQuestion = null;let clientId = localStorage.getItem('baClientId');
+if (!clientId) { clientId = (crypto.randomUUID ? crypto.randomUUID() : String(Date.now()) + '-' + Math.random().toString(36).slice(2)); localStorage.setItem('baClientId', clientId); }
         
         // ---- CHAT HISTORY (chat_messages) ----
         // Only signed-in users have rows: RLS ties every row to auth.uid().
@@ -1506,7 +1507,7 @@ src="https://www.facebook.com/tr?id=1298632592161391&ev=PageView&noscript=1"
                         ...(accessToken ? { 'Authorization': 'Bearer ' + accessToken } : {}),
                     },
                     // Only the recent history travels, so a long session stays cheap.
-                    body: JSON.stringify({ messages: aiConversation.slice(-HISTORY_LIMIT) }),
+                    body: JSON.stringify({ messages: aiConversation.slice(-HISTORY_LIMIT) , clientId: clientId }),
                 });
                 const data = await response.json();
                 document.getElementById(loadingId)?.remove();
