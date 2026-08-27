@@ -5,7 +5,7 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  const { messages } = req.body;
+  const { messages, clientId } = req.body;
 
   if (!messages || !Array.isArray(messages)) {
     return res.status(400).json({ error: 'Invalid messages' });
@@ -14,7 +14,8 @@ export default async function handler(req, res) {
   const SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
   const DAILY_LIMIT = 5;
   const TRIAL_DAYS = 7;
-  const ANON_DAILY_LIMIT = 1;
+  const ANON_DAILY_LIMIT = 3;
+  const ANON_IP_DAILY_LIMIT = 40;
 
   const token = (req.headers.authorization || '').replace('Bearer ', '').trim();
   const isAnon = !token;
@@ -23,7 +24,9 @@ export default async function handler(req, res) {
   const ipHash = crypto.createHash('sha256').update((process.env.IP_HASH_SALT || 'bibleanswers') + '|' + ip).digest('hex');
   const anonToday = new Date().toISOString().slice(0, 10);
 
-  if (isAnon && !ip) {
+  const safeClientId = typeof clientId === 'string' && /^[a-zA-Z0-9-]{8,64}$/.test(clientId) ? clientId : null;
+
+  if (isAnon && !safeClientId) {
     return res.status(401).json({ error: 'sign_in_required' });
   }
 
@@ -44,18 +47,32 @@ export default async function handler(req, res) {
   }
 
   let profile = null;
+  let anonUsed = 0;
 
   if (isAnon) {
     const anonRes = await fetch(
-      SUPABASE_URL + '/rest/v1/anon_usage?ip_hash=eq.' + ipHash + '&select=day,count',
+      SUPABASE_URL + '/rest/v1/anon_usage?client_id=eq.' + safeClientId + '&day=eq.' + anonToday + '&select=count',
       { headers: { apikey: SERVICE_KEY, Authorization: 'Bearer ' + SERVICE_KEY } }
     );
     const anonRows = await anonRes.json();
     const anonRow = Array.isArray(anonRows) ? anonRows[0] : null;
-    const anonUsed = anonRow && anonRow.day === anonToday ? anonRow.count : 0;
+    anonUsed = anonRow ? anonRow.count : 0;
     if (anonUsed >= ANON_DAILY_LIMIT) {
       return res.status(401).json({ error: 'sign_in_required' });
     }
+
+    if (ip) {
+      const ipRes = await fetch(
+        SUPABASE_URL + '/rest/v1/anon_usage?ip_hash=eq.' + ipHash + '&day=eq.' + anonToday + '&select=count',
+        { headers: { apikey: SERVICE_KEY, Authorization: 'Bearer ' + SERVICE_KEY } }
+      );
+      const ipRows = await ipRes.json();
+      const ipTotal = Array.isArray(ipRows) ? ipRows.reduce((s, r) => s + (r.count || 0), 0) : 0;
+      if (ipTotal >= ANON_IP_DAILY_LIMIT) {
+        return res.status(401).json({ error: 'sign_in_required' });
+      }
+    }
+
     profile = {
       subscription_status: 'none',
       created_at: new Date().toISOString(),
@@ -123,7 +140,7 @@ export default async function handler(req, res) {
           'Content-Type': 'application/json',
           Prefer: 'resolution=merge-duplicates,return=minimal'
         },
-        body: JSON.stringify({ ip_hash: ipHash, day: anonToday, count: 1 })
+        body: JSON.stringify({ client_id: safeClientId, day: anonToday, ip_hash: ipHash, count: anonUsed + 1 })
       });
     } else if (!subscribed) {
       await fetch(SUPABASE_URL + '/rest/v1/profiles?id=eq.' + userId, {
