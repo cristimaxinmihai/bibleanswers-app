@@ -1484,7 +1484,7 @@ if (!clientId) { clientId = (crypto.randomUUID ? crypto.randomUUID() : String(Da
             const question = input.value.trim();
             if (!question) return;
 
-            // Signed-out visitors get one question a day; the server decides.
+            // Signed-out visitors get three questions a day; the server decides.
             const { data: sessionData } = await sb.auth.getSession();
             const accessToken = sessionData.session ? sessionData.session.access_token : null;
             
@@ -1520,7 +1520,7 @@ if (!clientId) { clientId = (crypto.randomUUID ? crypto.randomUUID() : String(Da
 
                     if (response.status === 401) {
                         appendAiMessage('assistant', currentUser ? 'Please sign in again to continue.' : 'Create a free account to keep asking - it takes a few seconds.');
-                        if (currentUser) { openAuthModal('signin'); } else { openAuthModal('signup'); setAuthMessage('Create a free account to keep going - 5 free questions a day.', 'success'); }
+                        if (currentUser) { openAuthModal('signin'); } else { openAuthModal('signup'); setAuthMessage('Create a free account to keep going - it takes a few seconds.', 'success'); }
                     } else if (response.status === 402) {
                         appendAiMessage('assistant', 'Your free trial has ended. Subscribe to keep asking questions.');
                         accountState.trialOver = true;
