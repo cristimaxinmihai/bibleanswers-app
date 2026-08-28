@@ -773,6 +773,7 @@ src="https://www.facebook.com/tr?id=1298632592161391&ev=PageView&noscript=1"
                         // Email confirmation is off: the user is signed in right away.
                         closeAuthModal();
                     } else {
+    
                         setAuthMessage('Check your email to confirm your account, then sign in.', 'success');
                         document.getElementById('authPassword').value = '';
                     }
@@ -781,6 +782,7 @@ src="https://www.facebook.com/tr?id=1298632592161391&ev=PageView&noscript=1"
                     if (error) {
                         setAuthMessage(error.message, 'error');
                     } else {
+                        if (pendingQuestion) { const q = pendingQuestion; pendingQuestion = null; const mb = document.getElementById('aiMessages'); if (mb && mb.lastChild) mb.removeChild(mb.lastChild); if (mb && mb.lastChild) mb.removeChild(mb.lastChild); document.getElementById('aiInput').value = q; setTimeout(function () { sendAiQuestion(); }, 800); }
                         closeAuthModal();
                     }
                 }
