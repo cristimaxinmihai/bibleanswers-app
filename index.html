@@ -133,8 +133,8 @@ src="https://www.facebook.com/tr?id=1298632592161391&ev=PageView&noscript=1"
             cursor: pointer;
         }
         .sign-up-btn {
-            background-color: var(--accent-color);
-            color: white;
+            background-color: transparent;
+            color: var(--text-secondary);
             text-decoration: none;
             padding: 8px 18px;
             border-radius: 20px;
@@ -514,7 +514,7 @@ src="https://www.facebook.com/tr?id=1298632592161391&ev=PageView&noscript=1"
             </div>
             <div id="aiMessages" style="max-height:320px;overflow-y:auto;margin-bottom:14px;"></div>
             <div style="display:flex;gap:8px;">
-                <input type="text" id="aiInput" placeholder="Ask any Bible question..." style="flex:1;border:1px solid #ddd;border-radius:24px;padding:10px 16px;font-size:14.5px;outline:none;" onkeydown="if(event.key==='Enter') sendAiQuestion()">
+                <input type="text" id="aiInput" placeholder="How can I have more peace?" style="flex:1;border:2px solid var(--accent-color);border-radius:24px;padding:14px 18px;font-size:16px;outline:none;box-shadow:0 2px 10px rgba(0,81,255,0.15);" onkeydown="if(event.key==='Enter') sendAiQuestion()">
                 <button onclick="sendAiQuestion()" style="background:var(--accent-color);color:#fff;border:none;border-radius:50%;width:40px;height:40px;font-size:16px;cursor:pointer;flex-shrink:0;">→</button>
             </div>
             <p style="color:#999;font-size:12px;margin-top:10px;margin-bottom:0;">AI-generated answers. Please weigh them against Scripture and pastoral guidance.</p>
