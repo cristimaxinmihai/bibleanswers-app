@@ -1617,7 +1617,11 @@ if (!clientId) { clientId = (crypto.randomUUID ? crypto.randomUUID() : String(Da
     </div>
 
     <script>
-        const INSTALL_DISMISSED_KEY = 'installBannerDismissed';
+                const INSTALL_DISMISSED_KEY = 'installBannerDismissed';
+        const INSTALL_ANSWERS_KEY = 'installBannerAnswers';
+        const INSTALL_MIN_ANSWERS = 3;
+        const INSTALL_SNOOZE_DAYS = 7;
+                const INSTALL_OBSERVER_START = Date.now();
         let deferredInstallPrompt = null;
         let installBannerShown = false;
 
@@ -1644,8 +1648,13 @@ if (!clientId) { clientId = (crypto.randomUUID ? crypto.randomUUID() : String(Da
         function maybeShowInstallBanner() {
             if (installBannerShown) return;
             if (isStandaloneApp()) return;
-            if (localStorage.getItem(INSTALL_DISMISSED_KEY) === 'yes') return;
-
+                        try {
+                const until = parseInt(localStorage.getItem(INSTALL_DISMISSED_KEY) || '0', 10);
+                if (until && Date.now() < until) return;
+            } catch (err) {}
+            let answersSoFar = 0;
+            try { answersSoFar = parseInt(localStorage.getItem(INSTALL_ANSWERS_KEY) || '0', 10) || 0; } catch (err) {}
+            if (answersSoFar < INSTALL_MIN_ANSWERS) return;
             const env = installEnvironment();
             if (env === 'none') return;
             if (env === 'android' && !deferredInstallPrompt) return;
@@ -1675,7 +1684,8 @@ if (!clientId) { clientId = (crypto.randomUUID ? crypto.randomUUID() : String(Da
             const banner = document.getElementById('installBanner');
             if (banner) banner.classList.remove('show');
                         document.body.classList.remove('install-banner-open');
-            try { localStorage.setItem(INSTALL_DISMISSED_KEY, 'yes'); } catch (err) {}
+                        try { localStorage.setItem(INSTALL_DISMISSED_KEY, String(Date.now() + INSTALL_SNOOZE_DAYS * 86400000)); } catch (err) {}
+
         }
 
         async function handleInstallAction() {
@@ -1694,7 +1704,13 @@ if (!clientId) { clientId = (crypto.randomUUID ? crypto.randomUUID() : String(Da
                         if (node.nodeType !== 1) return;
                         if (node.id) return;
                         if (node.style && node.style.justifyContent === 'flex-start') {
-                            setTimeout(maybeShowInstallBanner, 1500);
+                                                            if (Date.now() - INSTALL_OBSERVER_START < 4000) return;
+                                try {
+                                    const n = (parseInt(localStorage.getItem(INSTALL_ANSWERS_KEY) || '0', 10) || 0) + 1;
+                                    localStorage.setItem(INSTALL_ANSWERS_KEY, String(n));
+                                } catch (err) {}
+                                setTimeout(maybeShowInstallBanner, 1500);
+
                         }
                     });
                 });
