@@ -1475,7 +1475,7 @@ if (!clientId) { clientId = (crypto.randomUUID ? crypto.randomUUID() : String(Da
                 ? text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
                 : formatAiText(text);
             bubble.innerHTML = `<div style="max-width:82%;background:${role === 'user' ? '#0051ff' : '#f2f4f8'};color:${role === 'user' ? '#fff' : '#111'};border-radius:16px;padding:10px 14px;font-size:14.5px;line-height:1.5;white-space:pre-wrap;">${content}</div>`;
-            box.appendChild(bubble); if (role === 'assistant' && typeof restoredIndex !== 'number') { const top = function () { box.scrollTop = Math.max(0, bubble.offsetTop - box.offsetTop); }; top(); setTimeout(top, 60); return; }
+            box.appendChild(bubble); if (role === 'assistant' && typeof restoredIndex !== 'number') { const top = function () { box.scrollTop = Math.max(0, bubble.offsetTop - box.offsetTop - 12); }; top(); setTimeout(top, 60); return; }
             box.scrollTop = box.scrollHeight;
         }
 
