@@ -1187,14 +1187,14 @@ src="https://www.facebook.com/tr?id=1298632592161391&ev=PageView&noscript=1"
         }
 
         // ---- RENDER FAQS ----
-        function renderFaqs(list) {
+        let currentFaqList = []; function askFaq(i) { const faq = currentFaqList[i]; if (!faq) return; const cb = document.getElementById('aiChatBox'); if (!cb || cb.style.display === 'none') { const pw = document.getElementById('paywallBox'); if (pw) pw.scrollIntoView({ behavior: 'smooth', block: 'center' }); return; } const input = document.getElementById('aiInput'); if (!input) return; input.value = faq.question; cb.scrollIntoView({ behavior: 'smooth', block: 'start' }); setTimeout(function () { sendAiQuestion(); }, 400); } function renderFaqs(list) { currentFaqList = list;
             const container = document.getElementById('faqContainer');
             if (!list.length) {
                 container.innerHTML = '<div class="no-results">No results found. Try a different search term.</div>';
                 return;
             }
             container.innerHTML = list.map((faq, i) => `
-                <div class="faq-card" id="faq-${i}" onclick="toggleFaq(${i})">
+                <div class="faq-card" id="faq-${i}" onclick="askFaq(${i})">
                     <div class="faq-question">
                         <span>${faq.question}</span>
                         <span class="chevron">▾</span>
