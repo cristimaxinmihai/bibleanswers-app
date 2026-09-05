@@ -1483,10 +1483,17 @@ if (!clientId) { clientId = (crypto.randomUUID ? crypto.randomUUID() : String(Da
         // ---- FOLLOW-UP QUESTIONS ----
         // Shown under the last answer so the reader does not have to invent
         // a second question. Optional: the input box works exactly as before.
-        const FOLLOW_UPS = [
+                const FOLLOW_UPS = [
             "What does the Bible say about worry?",
             "How do I forgive someone who hurt me?",
-            "How should I pray when I don't have words?"
+            "How should I pray when I don't have words?",
+            "How can I know God's will for my life?",
+            "What does the Bible say about loneliness?",
+            "How do I trust God when life is hard?",
+            "What does the Bible say about guilt and shame?",
+            "How can I grow stronger in my faith?",
+            "What does the Bible say about fear?",
+            "How do I find peace when I can't sleep?"
         ];
 
         function hideFollowUps() {
@@ -1502,8 +1509,15 @@ if (!clientId) { clientId = (crypto.randomUUID ? crypto.randomUUID() : String(Da
             // No point offering a question the account cannot ask right now.
             if (currentUser && !accountState.subscribed &&
                 (accountState.trialOver || accountState.questionsUsedToday >= DAILY_LIMIT)) return;
-
-            el.innerHTML = FOLLOW_UPS.map(function (q) {
+            // Drop anything already asked in this conversation, then take three.
+            const asked = aiConversation
+                .filter(function (m) { return m.role === 'user'; })
+                .map(function (m) { return m.content.trim().toLowerCase(); });
+            const remaining = FOLLOW_UPS.filter(function (q) {
+                return asked.indexOf(q.trim().toLowerCase()) === -1;
+            }).slice(0, 3);
+            if (!remaining.length) { hideFollowUps(); return; }
+            el.innerHTML = remaining.map(function (q) {
                 return '<button type="button" class="follow-up-chip" data-q="' +
                     q.replace(/"/g, '&quot;') +
                     '" style="background:#f2f4f8;border:1px solid var(--border-color);border-radius:18px;padding:9px 14px;font-size:13px;color:#111;cursor:pointer;font-family:inherit;text-align:left;">' +
