@@ -513,6 +513,7 @@ src="https://www.facebook.com/tr?id=1298632592161391&ev=PageView&noscript=1"
                 <button onclick="clearAiChat()" style="background:none;border:none;color:var(--accent-color);font-size:13px;cursor:pointer;text-decoration:underline;padding:0;">Clear</button>
             </div>
             <div id="aiMessages" style="max-height:320px;overflow-y:auto;margin-bottom:14px;"></div>
+            <div id="followUpChips" style="display:none;flex-wrap:wrap;gap:8px;margin-bottom:12px;"></div>
             <div style="display:flex;gap:8px;">
                 <input type="text" id="aiInput" placeholder="Why does God allow pain?" style="flex:1;border:2px solid var(--accent-color);border-radius:24px;padding:14px 18px;font-size:16px;outline:none;box-shadow:0 2px 10px rgba(0,81,255,0.15);" onkeydown="if(event.key==='Enter') sendAiQuestion()">
                 <button onclick="sendAiQuestion()" style="background:var(--accent-color);color:#fff;border:none;border-radius:50%;width:40px;height:40px;font-size:16px;cursor:pointer;flex-shrink:0;">→</button>
@@ -1442,6 +1443,7 @@ if (!clientId) { clientId = (crypto.randomUUID ? crypto.randomUUID() : String(Da
             // Clearing now also deletes the saved history, so ask first.
             if (currentUser && !confirm('Clear this conversation? Your saved history will be deleted.')) return;
             aiConversation = [];
+                                hideFollowUps();
             document.getElementById('aiMessages').innerHTML = '';
             if (!currentUser) return;
             try {
@@ -1478,11 +1480,52 @@ if (!clientId) { clientId = (crypto.randomUUID ? crypto.randomUUID() : String(Da
             box.appendChild(bubble); if (role === 'assistant' && typeof restoredIndex !== 'number') { const top = function () { box.scrollTop = Math.max(0, bubble.offsetTop - box.offsetTop - 12); }; top(); setTimeout(top, 60); return; }
             box.scrollTop = box.scrollHeight;
         }
+        // ---- FOLLOW-UP QUESTIONS ----
+        // Shown under the last answer so the reader does not have to invent
+        // a second question. Optional: the input box works exactly as before.
+        const FOLLOW_UPS = [
+            "What does the Bible say about worry?",
+            "How do I forgive someone who hurt me?",
+            "How should I pray when I don't have words?"
+        ];
 
+        function hideFollowUps() {
+            const el = document.getElementById('followUpChips');
+            if (!el) return;
+            el.style.display = 'none';
+            el.innerHTML = '';
+        }
+
+        function showFollowUps() {
+            const el = document.getElementById('followUpChips');
+            if (!el) return;
+            // No point offering a question the account cannot ask right now.
+            if (currentUser && !accountState.subscribed &&
+                (accountState.trialOver || accountState.questionsUsedToday >= DAILY_LIMIT)) return;
+
+            el.innerHTML = FOLLOW_UPS.map(function (q) {
+                return '<button type="button" class="follow-up-chip" data-q="' +
+                    q.replace(/"/g, '&quot;') +
+                    '" style="background:#f2f4f8;border:1px solid var(--border-color);border-radius:18px;padding:9px 14px;font-size:13px;color:#111;cursor:pointer;font-family:inherit;text-align:left;">' +
+                    q + '</button>';
+            }).join('');
+
+            el.querySelectorAll('.follow-up-chip').forEach(function (btn) {
+                btn.onclick = function () {
+                    const input = document.getElementById('aiInput');
+                    if (!input) return;
+                    input.value = btn.getAttribute('data-q');
+                    hideFollowUps();
+                    sendAiQuestion();
+                };
+            });
+            el.style.display = 'flex';
+        }
         async function sendAiQuestion() {
             const input = document.getElementById('aiInput');
             const question = input.value.trim();
             if (!question) return;
+                        hideFollowUps();
 
             // Signed-out visitors get three questions a day; the server decides.
             const { data: sessionData } = await sb.auth.getSession();
@@ -1552,6 +1595,8 @@ if (!clientId) { clientId = (crypto.randomUUID ? crypto.randomUUID() : String(Da
                 if (!accountState.subscribed && accountState.questionsUsedToday >= DAILY_LIMIT) {
                     showDailyLimitPlans(false);
                 }
+
+                                showFollowUps();
             } catch (err) {
                 document.getElementById(loadingId)?.remove();
                 appendAiMessage('assistant', 'Sorry, something went wrong. Please try again.');
