@@ -799,7 +799,8 @@ src="https://www.facebook.com/tr?id=1298632592161391&ev=PageView&noscript=1"
             }
 
             btn.disabled = false;
-            btn.textContent = originalLabel;
+                            btn.textContent = authMode === 'signup' ? 'Create account' : 'Sign in';
+
         }
 
         async function handleSignOut() {
