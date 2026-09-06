@@ -496,7 +496,12 @@ src="https://www.facebook.com/tr?id=1298632592161391&ev=PageView&noscript=1"
 
             <label for="authPassword">Password</label>
             <input type="password" id="authPassword" autocomplete="current-password" placeholder="At least 6 characters" onkeydown="if(event.key==='Enter') handleAuthSubmit()">
+                <label id="dailyEmailRow" style="display:flex;align-items:center;gap:8px;margin:12px 0;font-size:14px;cursor:pointer;">
+                    <input type="checkbox" id="dailyEmailOptIn" checked style="width:18px;height:18px;">
+                    <span>Send me a daily verse and question</span>
+                </label>
 
+         
             <button class="auth-submit" id="authSubmitBtn" onclick="handleAuthSubmit()">Create account</button>
 
             <p class="auth-switch" id="authSwitch"></p>
@@ -716,6 +721,8 @@ src="https://www.facebook.com/tr?id=1298632592161391&ev=PageView&noscript=1"
                 ? 'Save your place and keep your questions in one account.'
                 : 'Sign in to pick up where you left off.';
             document.getElementById('authSubmitBtn').textContent = isSignUp ? 'Create account' : 'Sign in';
+                        document.getElementById('dailyEmailRow').style.display = isSignUp ? 'flex' : 'none';
+
             document.getElementById('authPassword').setAttribute('autocomplete', isSignUp ? 'new-password' : 'current-password');
             document.getElementById('authSwitch').innerHTML = isSignUp
                 ? 'Already have an account? <button onclick="setAuthMode(\'signin\')">Sign in</button>'
