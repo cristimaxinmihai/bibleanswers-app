@@ -772,6 +772,10 @@ src="https://www.facebook.com/tr?id=1298632592161391&ev=PageView&noscript=1"
             try {
                 if (authMode === 'signup') {
                     const { data, error } = await sb.auth.signUp({ email, password });
+                                            if (!error && data?.user?.id && document.getElementById('dailyEmailOptIn').checked) {
+                            await sb.from('profiles').update({ daily_email: true }).eq('id', data.user.id);
+                        }
+
                     if (!error && data?.user?.identities?.length && typeof fbq === 'function') {
     fbq('track', 'CompleteRegistration');
 }
