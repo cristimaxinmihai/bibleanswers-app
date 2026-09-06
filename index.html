@@ -768,8 +768,15 @@ src="https://www.facebook.com/tr?id=1298632592161391&ev=PageView&noscript=1"
                     if (!error && data?.user?.identities?.length && typeof fbq === 'function') {
     fbq('track', 'CompleteRegistration');
 }
-                    if (error) {
-                        setAuthMessage(error.message, 'error');
+                                        if (error) {
+                        if (/already registered|already exists/i.test(error.message)) {
+                            setAuthMode('signin');
+                            document.getElementById('authEmail').value = email;
+                            setAuthMessage('You already have an account with this email. Sign in below.', 'error');
+                        } else {
+                            setAuthMessage(error.message, 'error');
+                        }
+
                     } else if (data.session) { if (pendingQuestion) { const q = pendingQuestion; pendingQuestion = null; const mb = document.getElementById('aiMessages'); if (mb && mb.lastChild) mb.removeChild(mb.lastChild); if (mb && mb.lastChild) mb.removeChild(mb.lastChild); document.getElementById('aiInput').value = q; setTimeout(function () { const i0 = document.getElementById('aiInput'); if (i0) i0.scrollIntoView({ behavior: 'smooth', block: 'center' }); sendAiQuestion(); }, 800); } else { setTimeout(function () { const inp = document.getElementById('aiInput'); if (inp) { inp.scrollIntoView({ behavior: 'smooth', block: 'center' }); inp.focus(); if (typeof appendAiMessage === 'function') appendAiMessage('assistant', 'Your account is ready. Ask your first question below.'); } }, 500); }
                         // Email confirmation is off: the user is signed in right away.
                         closeAuthModal();
