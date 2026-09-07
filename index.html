@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>BibleAnswers - Grow Your Faith Daily</title>
     <meta name="description" content="Clear, compassionate answers to Bible questions, with every verse in King James English. Prayers, Bible verses by topic, and a chat that answers real questions.">
     <link rel="canonical" href="https://askbibleanswers.com/">
@@ -460,6 +460,13 @@ src="https://www.facebook.com/tr?id=1298632592161391&ev=PageView&noscript=1"
         @media (max-width: 700px) {
             .topics-grid { grid-template-columns: repeat(3, 1fr); } .footer-bottom { padding-bottom: 80px; } .faq-intro { display: none; } .faq-card.active .faq-intro { display: block; } .footer-grid { grid-template-columns: 1fr 1fr; gap: 16px; } .footer-grid h4 { font-size: 14px; margin-bottom: 8px; } .footer-grid ul { line-height: 1.7; } .footer-grid ul li a { font-size: 13px; } header { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; padding: 12px; gap: 8px; } .logo { font-size: 14px; } .header-center { flex-basis: 100%; order: 3; display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; } .header-center a { font-size: 11px; } .header-right { gap: 8px; } .sign-in { font-size: 11px; } .sign-up-btn { font-size: 11px; padding: 6px 12px; } .account-email { font-size: 11px; max-width: 120px; }
         }
+    /* iOS safe area (Capacitor) */
+body {
+  padding-top: env(safe-area-inset-top);
+  padding-bottom: env(safe-area-inset-bottom);
+  padding-left: env(safe-area-inset-left);
+  padding-right: env(safe-area-inset-right);
+}
     </style>
 </head>
 <body>
