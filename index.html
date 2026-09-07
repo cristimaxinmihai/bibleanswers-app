@@ -486,6 +486,7 @@ body {
             <a href="#" class="sign-in" id="signInLink" onclick="event.preventDefault(); openAuthModal('signin')">Sign In</a>
             <a href="#" class="sign-up-btn" id="signUpLink" onclick="event.preventDefault(); openAuthModal('signup')">Sign Up</a>
             <a href="#" class="sign-in" id="signOutLink" style="display:none;" onclick="event.preventDefault(); handleSignOut()">Sign Out</a>
+                            <a href="#" class="sign-in" id="deleteAccountLink" style="display:none;" onclick="event.preventDefault(); handleDeleteAccount()">Delete Account</a>
         </div>
     </header>
 
@@ -821,6 +822,27 @@ body {
 
         }
 
+        async function handleDeleteAccount() {
+  const step1 = confirm("Delete your account permanently?\n\nThis erases your account, your saved questions and answers, and cancels any active subscription immediately. This cannot be undone.");
+  if (!step1) return;
+  const typed = prompt('This is permanent. Type DELETE to confirm:');
+  if (!typed || typed.trim().toUpperCase() !== 'DELETE') return;
+  try {
+    const { data: { session } } = await sb.auth.getSession();
+    if (!session) { alert('Please sign in again.'); return; }
+    const resp = await fetch('https://askbibleanswers.com/api/delete-account', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + session.access_token }
+    });
+    if (!resp.ok) { alert('Could not delete the account. Please email cristimaxinmihai@yahoo.com and we will remove it.'); return; }
+    await sb.auth.signOut();
+    localStorage.clear();
+    alert('Your account has been deleted.');
+    window.location.href = '/';
+  } catch (err) {
+    alert('Could not delete the account. Please email cristimaxinmihai@yahoo.com and we will remove it.');
+  }
+}
         async function handleSignOut() {
             await sb.auth.signOut();
         }
@@ -831,6 +853,8 @@ body {
             const signIn = document.getElementById('signInLink');
             const signUp = document.getElementById('signUpLink');
             const signOut = document.getElementById('signOutLink');
+                        const delAcc = document.getElementById('deleteAccountLink');
+
 
             if (currentUser) {
                 emailEl.textContent = currentUser.email;
@@ -838,9 +862,13 @@ body {
                 signIn.style.display = 'none';
                 signUp.style.display = 'none';
                 signOut.style.display = 'inline';
+                                delAcc.style.display = 'inline';
+
             } else {
                 emailEl.style.display = 'none';
                 signIn.style.display = 'inline';
+                                delAcc.style.display = 'none';
+
                 signUp.style.display = 'inline';
                 signOut.style.display = 'none';
             }
