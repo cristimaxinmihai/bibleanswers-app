@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>Terms of Service — BibleAnswers</title>
 <style>
   :root{
@@ -50,6 +50,13 @@
     color:var(--muted);font-size:.875rem;
   }
   @media (max-width:480px){ h1{font-size:1.65rem} .wrap{padding-top:1.75rem} }
+/* iOS safe area (Capacitor) */
+body {
+  padding-top: env(safe-area-inset-top);
+  padding-bottom: env(safe-area-inset-bottom);
+  padding-left: env(safe-area-inset-left);
+  padding-right: env(safe-area-inset-right);
+}
 </style>
 </head>
 <body>
