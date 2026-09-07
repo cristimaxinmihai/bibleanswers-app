@@ -1,6 +1,6 @@
 {
-  "name": "BibleAnswers",
-  "short_name": "BibleAnswers",
+  "name": "AskBibleAnswers",
+  "short_name": "AskBibleAnswers",
   "description": "Honest answers to real questions, grounded in Scripture.",
   "start_url": "/",
   "scope": "/",
