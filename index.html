@@ -3,24 +3,24 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <title>BibleAnswers - Grow Your Faith Daily</title>
+    <title>AskBibleAnswers - Grow Your Faith Daily</title>
     <meta name="description" content="Clear, compassionate answers to Bible questions, with every verse in King James English. Prayers, Bible verses by topic, and a chat that answers real questions.">
     <link rel="canonical" href="https://askbibleanswers.com/">
     <link rel="icon" type="image/png" href="/favicon.png">
     <link rel="apple-touch-icon" href="/apple-touch-icon.png">
     <link rel="manifest" href="/manifest.json">
-<meta name="apple-mobile-web-app-title" content="BibleAnswers">
+<meta name="apple-mobile-web-app-title" content="AskBibleAnswers">
 <meta name="theme-color" content="#0051ff">
     <meta property="og:type" content="website">
-    <meta property="og:site_name" content="BibleAnswers">
-    <meta property="og:title" content="BibleAnswers - Grow Your Faith Daily">
+    <meta property="og:site_name" content="AskBibleAnswers">
+    <meta property="og:title" content="AskBibleAnswers - Grow Your Faith Daily">
     <meta property="og:description" content="Clear, compassionate answers to Bible questions, with every verse in King James English.">
     <meta property="og:url" content="https://askbibleanswers.com/">
     <meta property="og:image" content="https://askbibleanswers.com/og-image.png">
     <meta property="og:image:width" content="1200">
     <meta property="og:image:height" content="630">
     <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:title" content="BibleAnswers - Grow Your Faith Daily">
+    <meta name="twitter:title" content="AskBibleAnswers - Grow Your Faith Daily">
     <meta name="twitter:description" content="Clear, compassionate answers to Bible questions, with every verse in King James English.">
     <meta name="twitter:image" content="https://askbibleanswers.com/og-image.png">
     <script>
@@ -474,7 +474,7 @@ body {
     <header>
         <div class="header-left">
             
-            <a href="/" style="text-decoration:none;color:inherit;"><div class="logo">📖 BibleAnswers</div></a>
+            <a href="/" style="text-decoration:none;color:inherit;"><div class="logo">📖 AskBibleAnswers</div></a>
         </div>
         <div class="header-center">
             <a onclick="searchAndRun('lessons')">Bible Lessons</a>
@@ -536,7 +536,7 @@ body {
         <div id="paywallBox" style="display:none;background:#fff;border:1px solid var(--border-color);border-radius:14px;padding:30px 24px;margin-bottom:50px;text-align:center;">
             <div id="paywallIcon" style="font-size:32px;margin-bottom:10px;">🔒</div>
             <h3 id="paywallTitle" style="margin:0 0 8px;font-size:22px;">Your free trial has ended</h3>
-            <p id="paywallSubtitle" style="color:var(--text-secondary);font-size:14.5px;margin:0 0 24px;">Subscribe to keep asking BibleAnswers AI unlimited questions, every day.</p>
+            <p id="paywallSubtitle" style="color:var(--text-secondary);font-size:14.5px;margin:0 0 24px;">Subscribe to keep asking AskBibleAnswers AI unlimited questions, every day.</p>
 
             <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:12px;margin-bottom:18px;">
                 <div style="border:1px solid var(--border-color);border-radius:12px;padding:16px 10px;">
@@ -619,7 +619,7 @@ body {
             </div>
         </div>
         <div class="footer-bottom">
-            Copyright &copy; 2026 BibleAnswers. All Rights Reserved.
+            Copyright &copy; 2026 AskBibleAnswers. All Rights Reserved.
             <br><a href="/terms.html">Terms of Service</a> · <a href="/privacy.html">Privacy Policy</a> · <a href="/editorial.html">Editorial Policy</a> · <a href="https://billing.stripe.com/p/login/14A5kE096dKo6DNdBM7Re00">Manage Subscription</a>
         </div>
     </footer>
@@ -1406,7 +1406,7 @@ if (!clientId) { clientId = (crypto.randomUUID ? crypto.randomUUID() : String(Da
             if (!paywallBox) return;
             document.getElementById('paywallIcon').textContent = '🔒';
             document.getElementById('paywallTitle').textContent = 'Your free trial has ended';
-            document.getElementById('paywallSubtitle').textContent = 'Subscribe to keep asking BibleAnswers AI unlimited questions, every day.';
+            document.getElementById('paywallSubtitle').textContent = 'Subscribe to keep asking AskBibleAnswers AI unlimited questions, every day.';
             paywallBox.style.display = 'block';
             if (chatBox) chatBox.style.display = 'none';
             if (shouldScroll) {
@@ -1750,13 +1750,13 @@ if (!clientId) { clientId = (crypto.randomUUID ? crypto.randomUUID() : String(Da
             if (!banner || !textEl) return;
 
             if (env === 'ios-safari') {
-                textEl.innerHTML = '<strong>Keep BibleAnswers one tap away</strong>Tap the Share button, then Add to Home Screen.';
+                textEl.innerHTML = '<strong>Keep AskBibleAnswers one tap away</strong>Tap the Share button, then Add to Home Screen.';
                 actionBtn.style.display = 'none';
             } else if (env === 'ios-inapp') {
-                textEl.innerHTML = '<strong>Keep BibleAnswers one tap away</strong>Tap the menu, choose Open in Safari, then Share and Add to Home Screen.';
+                textEl.innerHTML = '<strong>Keep AskBibleAnswers one tap away</strong>Tap the menu, choose Open in Safari, then Share and Add to Home Screen.';
                 actionBtn.style.display = 'none';
             } else {
-                textEl.innerHTML = '<strong>Keep BibleAnswers one tap away</strong>Add it to your home screen for one-tap access.';
+                textEl.innerHTML = '<strong>Keep AskBibleAnswers one tap away</strong>Add it to your home screen for one-tap access.';
                 actionBtn.style.display = 'inline-block';
             }
 
