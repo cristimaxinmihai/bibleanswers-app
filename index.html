@@ -1301,6 +1301,7 @@ body {
 
         function searchAndRun(query) {
             const q = normalizeSearch(query);
+            document.getElementById('faqContainer').style.scrollMarginTop = 'calc(env(safe-area-inset-top) + 16px)';
             // "All Bible Verses" / "All Bible Lessons" / "Top questions" list everything
             if (q === 'all bible verses' || q === 'all bible lessons' || q === 'top questions') {
                 renderFaqs(faqsData);
