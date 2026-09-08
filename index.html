@@ -1630,7 +1630,8 @@ if (!clientId) { clientId = (crypto.randomUUID ? crypto.randomUUID() : String(Da
                     aiConversation.pop(); if (response.status === 401 && !currentUser) { pendingQuestion = question; }
 
                     if (response.status === 401) {
-                        appendAiMessage('assistant', currentUser ? 'Please sign in again to continue.' : 'Create a free account to keep asking - it takes a few seconds.');
+                                                if (!window.authPromptShown) { appendAiMessage('assistant', currentUser ? 'Please sign in again to continue.' : 'Create a free account to keep asking - it takes a few seconds.'); window.authPromptShown = true; }
+
                         if (currentUser) { openAuthModal('signin'); } else { openAuthModal('signup'); setAuthMessage('Create a free account to keep going - it takes a few seconds.', 'success'); }
                     } else if (response.status === 402) {
                         appendAiMessage('assistant', 'Your free trial has ended. Subscribe to keep asking questions.');
