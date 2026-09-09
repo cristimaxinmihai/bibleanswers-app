@@ -533,6 +533,16 @@ body {
             </div>
             <p style="color:#999;font-size:12px;margin-top:10px;margin-bottom:0;">AI-generated answers. Please weigh them against Scripture and pastoral guidance.</p>
         </div>
+        <script>
+  // In the iOS app, remove the pricing block entirely.
+  if (window.Capacitor) {
+    document.addEventListener('DOMContentLoaded', function () {
+      var pb = document.getElementById('paywallBox');
+      if (pb && pb.parentNode) pb.parentNode.removeChild(pb);
+    });
+  }
+</script>
+
 
         <div id="paywallBox" style="display:none;background:#fff;border:1px solid var(--border-color);border-radius:14px;padding:30px 24px;margin-bottom:50px;text-align:center;">
             <div id="paywallIcon" style="font-size:32px;margin-bottom:10px;">🔒</div>
@@ -1432,7 +1442,22 @@ if (!clientId) { clientId = (crypto.randomUUID ? crypto.randomUUID() : String(Da
         function showTrialOverPaywall(shouldScroll) {
             const chatBox = document.getElementById('aiChatBox');
             const paywallBox = document.getElementById('paywallBox');
-            if (!paywallBox) return;
+            
+                if (window.Capacitor) {
+      chatBox.style.display = 'none';
+      var msg = document.getElementById('appTrialOverMsg');
+      if (!msg) {
+        msg = document.createElement('div');
+        msg.id = 'appTrialOverMsg';
+        msg.style.cssText = 'background:#fff;border:1px solid var(--border-color);border-radius:14px;padding:30px 24px;margin-bottom:50px;text-align:center;';
+        msg.innerHTML = '<h3 style="margin:0 0 8px;font-size:22px;">Thanks for trying AskBibleAnswers</h3><p style="color:var(--text-secondary);font-size:14.5px;margin:0;">Your free trial has ended. You can still browse Bible verses, lessons and answers below.</p>';
+        chatBox.parentNode.insertBefore(msg, chatBox.nextSibling);
+      }
+      return;
+    }
+                    if (!paywallBox) return;
+
+
             document.getElementById('paywallIcon').textContent = '🔒';
             document.getElementById('paywallTitle').textContent = 'Your free trial has ended';
             document.getElementById('paywallSubtitle').textContent = 'Subscribe to keep asking AskBibleAnswers AI unlimited questions, every day.';
