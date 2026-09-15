@@ -1,0 +1,82 @@
+import crypto from 'crypto';
+
+const SUPABASE_URL = 'https://zacllsdldntmcgttudod.supabase.co';
+const SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
+const RESEND_KEY = process.env.RESEND_API_KEY;
+
+async function sb(path, options = {}) {
+  const res = await fetch(SUPABASE_URL + '/rest/v1/' + path, {
+    ...options,
+    headers: {
+      apikey: SERVICE_KEY,
+      Authorization: 'Bearer ' + SERVICE_KEY,
+      'Content-Type': 'application/json',
+      ...(options.headers || {})
+    }
+  });
+  if (!res.ok) throw new Error(path + ' -> ' + res.status + ' ' + (await res.text()));
+  return res.status === 204 ? null : res.json();
+}
+
+export default async function handler(req, res) {
+  if (req.headers.authorization !== 'Bearer ' + process.env.CRON_SECRET) {
+    return res.status(401).json({ error: 'unauthorized' });
+  }
+
+  try {
+    const since = new Date(Date.now() - 48 * 3600 * 1000).toISOString();
+    const until = new Date(Date.now() - 20 * 3600 * 1000).toISOString();
+
+    const msgs = await sb(
+      'chat_messages?select=user_id,content,created_at&role=eq.user' +
+      '&created_at=gte.' + since + '&created_at=lte.' + until +
+      '&order=created_at.desc&limit=200'
+    );
+
+    const firstByUser = new Map();
+    for (const m of msgs) if (!firstByUser.has(m.user_id)) firstByUser.set(m.user_id, m.content);
+    if (firstByUser.size === 0) return res.status(200).json({ sent: 0, reason: 'no candidates' });
+
+    const ids = [...firstByUser.keys()];
+    const sent = await sb('reminder_log?select=user_id&user_id=in.(' + ids.join(',') + ')');
+    for (const r of sent) firstByUser.delete(r.user_id);
+    if (firstByUser.size === 0) return res.status(200).json({ sent: 0, reason: 'all already sent' });
+
+    let count = 0;
+    for (const [userId, question] of firstByUser) {
+      const users = await sb('profiles?select=email&id=eq.' + userId);
+      const email = users?.[0]?.email;
+      if (!email) continue;
+
+      const q = String(question).slice(0, 120).replace(/[<>]/g, '');
+      const r = await fetch('https://api.resend.com/emails', {
+        method: 'POST',
+        headers: {
+          Authorization: 'Bearer ' + RESEND_KEY,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          from: 'AskBibleAnswers <hello@askbibleanswers.com>',
+          to: email,
+          subject: 'More on "' + q + '"',
+          html: '<p>You asked about <strong>' + q + '</strong> yesterday.</p>' +
+                '<p>Scripture has more to say on it. You have 5 free questions waiting today.</p>' +
+                '<p><a href="https://askbibleanswers.com">Ask another question</a></p>' +
+                '<p style="font-size:12px;color:#888">AskBibleAnswers, Wheeling IL</p>'
+        })
+      });
+      if (!r.ok) continue;
+
+      await sb('reminder_log', {
+        method: 'POST',
+        headers: { Prefer: 'resolution=merge-duplicates' },
+        body: JSON.stringify({ user_id: userId })
+      });
+      count++;
+    }
+
+    return res.status(200).json({ sent: count });
+  } catch (e) {
+    return res.status(500).json({ error: e.message });
+  }
+}
