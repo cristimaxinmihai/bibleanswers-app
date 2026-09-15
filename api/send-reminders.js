@@ -25,7 +25,7 @@ export default async function handler(req, res) {
 
   try {
     const since = new Date(Date.now() - 48 * 3600 * 1000).toISOString();
-    const until = new Date(Date.now() - 20 * 3600 * 1000).toISOString();
+    const until = new Date(Date.now() - 0 * 3600 * 1000).toISOString();
 
     const msgs = await sb(
       'chat_messages?select=user_id,content,created_at&role=eq.user' +
