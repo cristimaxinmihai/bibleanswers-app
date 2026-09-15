@@ -15,7 +15,9 @@ async function sb(path, options = {}) {
     }
   });
   if (!res.ok) throw new Error(path + ' -> ' + res.status + ' ' + (await res.text()));
-  return res.status === 204 ? null : res.json();
+      const t = await res.text();
+    return t ? JSON.parse(t) : null;
+
 }
 
 export default async function handler(req, res) {
