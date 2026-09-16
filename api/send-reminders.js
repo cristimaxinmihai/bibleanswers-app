@@ -62,7 +62,9 @@ export default async function handler(req, res) {
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
-          from: 'AskBibleAnswers <hello@askbibleanswers.com>',
+                    from: 'Cristian from AskBibleAnswers <hello@askbibleanswers.com>',
+          reply_to: 'cristimaxinmihai@yahoo.com',
+
           to: email,
           subject: 'More on "' + q + '"',
           html: '<p>You asked about <strong>' + q + '</strong> yesterday.</p>' +
