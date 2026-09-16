@@ -67,6 +67,8 @@ export default async function handler(req, res) {
 
           to: email,
           subject: 'More on "' + q + '"',
+                    text: 'You asked about "' + q + '" yesterday.\n\nScripture has more to say on it.\n\nAsk another question: https://askbibleanswers.com\n\nUnsubscribe: ' + unsubUrl,
+
           html: '<p>You asked about <strong>' + q + '</strong> yesterday.</p>' +
                                '<p>Scripture has more to say on it.</p>' +
                 '<p><a href="https://askbibleanswers.com">Ask another question</a></p>' +
