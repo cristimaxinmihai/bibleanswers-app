@@ -66,7 +66,7 @@ export default async function handler(req, res) {
           to: email,
           subject: 'More on "' + q + '"',
           html: '<p>You asked about <strong>' + q + '</strong> yesterday.</p>' +
-                '<p>Scripture has more to say on it. You have 5 free questions waiting today.</p>' +
+                               '<p>Scripture has more to say on it.</p>' +
                 '<p><a href="https://askbibleanswers.com">Ask another question</a></p>' +
                '<p style="font-size:12px;color:#888">AskBibleAnswers, Wheeling IL</p>' +
                '<p style="font-size:12px;color:#888"><a href="' + unsubUrl + '" style="color:#888">Unsubscribe</a></p>',
