@@ -46,7 +46,9 @@ export default async function handler(req, res) {
 
     let count = 0;
     for (const [userId, question] of firstByUser) {
-      const users = await sb('profiles?select=email&id=eq.' + userId);
+      const users = await sb('profiles?select=email,daily_email&id=eq.' + userId);
+            if (!users?.[0]?.daily_email) continue;
+
       const email = users?.[0]?.email;
       if (!email) continue;
 
