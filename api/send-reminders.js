@@ -46,10 +46,12 @@ export default async function handler(req, res) {
 
     let count = 0;
     for (const [userId, question] of firstByUser) {
-      const users = await sb('profiles?select=email,daily_email&id=eq.' + userId);
+      const users = await sb('profiles?select=email,daily_email,unsubscribe_token&id=eq.' + userId);
             if (!users?.[0]?.daily_email) continue;
 
       const email = users?.[0]?.email;
+            const unsubUrl = 'https://askbibleanswers.com/api/unsubscribe?token=' + users[0].unsubscribe_token;
+
       if (!email) continue;
 
       const q = String(question).slice(0, 120).replace(/[<>]/g, '');
@@ -66,8 +68,11 @@ export default async function handler(req, res) {
           html: '<p>You asked about <strong>' + q + '</strong> yesterday.</p>' +
                 '<p>Scripture has more to say on it. You have 5 free questions waiting today.</p>' +
                 '<p><a href="https://askbibleanswers.com">Ask another question</a></p>' +
-                '<p style="font-size:12px;color:#888">AskBibleAnswers, Wheeling IL</p>'
+               '<p style="font-size:12px;color:#888">AskBibleAnswers, Wheeling IL</p>' +
+               '<p style="font-size:12px;color:#888"><a href="' + unsubUrl + '" style="color:#888">Unsubscribe</a></p>',
+          headers: { 'List-Unsubscribe': '<' + unsubUrl + '>' }
         })
+
       });
       if (!r.ok) continue;
 
