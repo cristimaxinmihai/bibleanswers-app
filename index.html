@@ -538,7 +538,7 @@ body {
   if (window.Capacitor) {
     document.addEventListener('DOMContentLoaded', function () {
       var pb = document.getElementById('paywallBox');
-      if (pb && pb.parentNode) pb.parentNode.removeChild(pb);
+      if (pb && pb.parentNode) pb.parentNode.removeChild(pb); }); } document.addEventListener('DOMContentLoaded', function () { var params = new URLSearchParams(location.search); var q = params.get('q'); if (!q) return; var input = document.getElementById('aiInput'); if (input) { input.value = q.slice(0, 300); var box = document.getElementById('aiChatBox'); if (box) box.scrollIntoView({ behavior: 'smooth', block: 'center' }); input.focus(); } params.delete('q'); var rest = params.toString(); history.replaceState(null, '', location.pathname + (rest ? '?' + rest : '')); }); if (false) { document.addEventListener('DOMContentLoaded', function () { var x = 0;
     });
   }
 </script>
