@@ -226,7 +226,7 @@ export default async function handler(req, res) {
 
       const raw = String(question).replace(/\s+/g, ' ').trim();
       const q = raw.length > 120 ? raw.slice(0, 120).trim() + '\u2026' : raw;
-      const verse = pickVerse(raw);
+      const verse = pickVerse(raw);       const askUrl = 'https://askbibleanswers.com/?q=' + encodeURIComponent(raw);
 
       const r = await fetch('https://api.resend.com/emails', {
         method: 'POST',
@@ -245,7 +245,7 @@ export default async function handler(req, res) {
             'Scripture has more to say on it:\n\n' +
             '"' + verse.text + '"\n' +
             '\u2014 ' + verse.ref + ' (KJV)\n\n' +
-            'Ask a follow-up question: https://askbibleanswers.com\n\n' +
+            'Ask a follow-up question: ' + askUrl + '\n\n' +
             'AskBibleAnswers, Wheeling IL\n' +
             'Unsubscribe: ' + unsubUrl,
 
@@ -258,7 +258,7 @@ export default async function handler(req, res) {
                 '<br><span style="font-size:13px;color:#777">&mdash; ' + esc(verse.ref) + ' (KJV)</span>' +
               '</blockquote>' +
               '<p style="margin:0 0 28px">' +
-                '<a href="https://askbibleanswers.com" style="display:inline-block;padding:12px 22px;background:#1a1a1a;color:#fff;text-decoration:none;border-radius:6px;font-weight:600">Ask a follow-up question</a>' +
+                '<a href="' + askUrl + '" style="display:inline-block;padding:12px 22px;background:#1a1a1a;color:#fff;text-decoration:none;border-radius:6px;font-weight:600">Ask a follow-up question</a>' +
               '</p>' +
               '<p style="margin:0;font-size:12px;color:#888">AskBibleAnswers, Wheeling IL</p>' +
               '<p style="margin:4px 0 0;font-size:12px;color:#888"><a href="' + unsubUrl + '" style="color:#888">Unsubscribe</a></p>' +
