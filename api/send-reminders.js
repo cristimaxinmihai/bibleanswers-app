@@ -1,8 +1,13 @@
-import crypto from 'crypto';
-
 const SUPABASE_URL = 'https://zacllsdldntmcgttudod.supabase.co';
 const SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 const RESEND_KEY = process.env.RESEND_API_KEY;
+
+const SITE = 'https://askbibleanswers.com/';
+const FROM = 'Cristian from AskBibleAnswers <hello@askbibleanswers.com>';
+const REPLY_TO = 'cristimaxinmihai@yahoo.com';
+
+// Stripe statuses that mean "already paying" -> no more sequence emails.
+const PAYING = ['active', 'trialing', 'past_due'];
 
 // --- Verse picker -----------------------------------------------------------
 // All verses are King James Version (public domain), matching the app.
@@ -175,6 +180,174 @@ function esc(s) {
 }
 // ---------------------------------------------------------------------------
 
+// --- Email building blocks --------------------------------------------------
+function askLink(q) {
+  return SITE + '?q=' + encodeURIComponent(q);
+}
+
+function button(url, label) {
+  return '<p style="margin:0 0 28px">' +
+    '<a href="' + url + '" style="display:inline-block;padding:12px 22px;background:#1a1a1a;color:#fff;text-decoration:none;border-radius:6px;font-weight:600">' +
+    esc(label) + '</a></p>';
+}
+
+function verseHtml(v) {
+  return '<blockquote style="margin:0 0 20px;padding:14px 18px;border-left:3px solid #c9b896;background:#faf7f1">' +
+    esc(v.text) +
+    '<br><span style="font-size:13px;color:#777">&mdash; ' + esc(v.ref) + ' (KJV)</span>' +
+    '</blockquote>';
+}
+
+function verseText(v) {
+  return '"' + v.text + '"\n\u2014 ' + v.ref + ' (KJV)';
+}
+
+function wrapHtml(inner, unsubUrl) {
+  return '<div style="font-family:-apple-system,Segoe UI,Helvetica,Arial,sans-serif;font-size:16px;line-height:1.55;color:#222;max-width:540px">' +
+    inner +
+    '<p style="margin:0;font-size:12px;color:#888">AskBibleAnswers, Wheeling IL</p>' +
+    '<p style="margin:4px 0 0;font-size:12px;color:#888"><a href="' + unsubUrl + '" style="color:#888">Unsubscribe</a></p>' +
+    '</div>';
+}
+
+function wrapText(inner, unsubUrl) {
+  return inner + '\n\nAskBibleAnswers, Wheeling IL\nUnsubscribe: ' + unsubUrl;
+}
+
+function p(html) {
+  return '<p style="margin:0 0 16px">' + html + '</p>';
+}
+
+async function sendEmail(to, unsubUrl, mail) {
+  const r = await fetch('https://api.resend.com/emails', {
+    method: 'POST',
+    headers: {
+      Authorization: 'Bearer ' + RESEND_KEY,
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      from: FROM,
+      reply_to: REPLY_TO,
+      to,
+      subject: mail.subject,
+      text: mail.text,
+      html: mail.html,
+      headers: { 'List-Unsubscribe': '<' + unsubUrl + '>' }
+    })
+  });
+  return r.ok;
+}
+// ---------------------------------------------------------------------------
+
+// --- Follow-up sequence (emails 2-6) ----------------------------------------
+// Days are counted from account creation (profiles.created_at).
+// Email 1 is the "Yesterday you asked" email, sent the day after the first question.
+function targetStep(ageDays) {
+  if (ageDays >= 30) return 6;
+  if (ageDays >= 14) return 5;
+  if (ageDays >= 8) return 4;
+  if (ageDays >= 6) return 3;
+  if (ageDays >= 3) return 2;
+  return 1;
+}
+
+const POPULAR_QUESTIONS = [
+  'How do I know God hears my prayers?',
+  'What does the Bible say about anxiety?',
+  'How can I forgive someone who hurt me?'
+];
+
+const SEQUENCE = {
+  // Day 3 - value, no selling
+  2: (unsub) => {
+    const v = { ref: 'Lamentations 3:22-23', text: 'It is of the LORD\u2019s mercies that we are not consumed, because his compassions fail not. They are new every morning: great is thy faithfulness.' };
+    const listHtml = POPULAR_QUESTIONS
+      .map((q) => '<li style="margin:0 0 8px"><a href="' + askLink(q) + '" style="color:#1a1a1a">' + esc(q) + '</a></li>')
+      .join('');
+    const listText = POPULAR_QUESTIONS.map((q) => '- ' + q + ': ' + askLink(q)).join('\n');
+    return {
+      subject: '3 questions worth asking',
+      html: wrapHtml(
+        p('A verse for today:') +
+        verseHtml(v) +
+        p('Here are three questions many readers bring to the Bible. Tap one to see what Scripture says:') +
+        '<ul style="margin:0 0 24px;padding-left:20px">' + listHtml + '</ul>' +
+        button(SITE, 'Ask your own question'),
+        unsub),
+      text: wrapText(
+        'A verse for today:\n\n' + verseText(v) + '\n\n' +
+        'Here are three questions many readers bring to the Bible:\n\n' + listText + '\n\n' +
+        'Ask your own question: ' + SITE,
+        unsub)
+    };
+  },
+
+  // Day 6 - honest heads-up that the free week is ending
+  3: (unsub) => ({
+    subject: 'Your free week is almost over',
+    html: wrapHtml(
+      p('Just a heads-up: your 7-day free trial of AskBibleAnswers ends in about a day.') +
+      p('Until then you still have 5 questions a day. Is there something on your heart you\u2019ve been meaning to ask?') +
+      button(SITE, 'Ask a question now'),
+      unsub),
+    text: wrapText(
+      'Just a heads-up: your 7-day free trial of AskBibleAnswers ends in about a day.\n\n' +
+      'Until then you still have 5 questions a day. Is there something on your heart you\u2019ve been meaning to ask?\n\n' +
+      'Ask a question now: ' + SITE,
+      unsub)
+  }),
+
+  // Day 8 - trial ended, plans on the website
+  4: (unsub) => ({
+    subject: 'Your free trial has ended',
+    html: wrapHtml(
+      p('Your free trial of AskBibleAnswers has ended. You can still read Bible verses, prayers and lessons for free, anytime.') +
+      p('If you\u2019d like to keep asking questions, plans start at <strong>$4.99 a week</strong>, or <strong>$89 a year</strong>. You can manage your account at askbibleanswers.com.') +
+      button(SITE, 'See plans'),
+      unsub),
+    text: wrapText(
+      'Your free trial of AskBibleAnswers has ended. You can still read Bible verses, prayers and lessons for free, anytime.\n\n' +
+      'If you\u2019d like to keep asking questions, plans start at $4.99 a week, or $89 a year. You can manage your account at askbibleanswers.com.\n\n' +
+      'See plans: ' + SITE,
+      unsub)
+  }),
+
+  // Day 14 - value + gentle invitation
+  5: (unsub) => {
+    const v = { ref: 'Psalm 46:1', text: 'God is our refuge and strength, a very present help in trouble.' };
+    return {
+      subject: 'A verse for this week',
+      html: wrapHtml(
+        p('A verse to carry with you this week:') +
+        verseHtml(v) +
+        p('Whenever you have a question about faith or life, your account is still there.') +
+        button(SITE, 'Open AskBibleAnswers'),
+        unsub),
+      text: wrapText(
+        'A verse to carry with you this week:\n\n' + verseText(v) + '\n\n' +
+        'Whenever you have a question about faith or life, your account is still there.\n\n' +
+        'Open AskBibleAnswers: ' + SITE,
+        unsub)
+    };
+  },
+
+  // Day 30 - last, personal, asks for a reply
+  6: (unsub) => ({
+    subject: 'One last note from Cristian',
+    html: wrapHtml(
+      p('Hi, this is Cristian. I built AskBibleAnswers on my own, to help people find what the Bible says about the questions they carry.') +
+      p('This is the last email in this series. If the app helped you, I\u2019d love to hear how. If it didn\u2019t, I\u2019d be even more grateful to know why. Just hit reply; I read every message.') +
+      p('God bless,<br>Cristian'),
+      unsub),
+    text: wrapText(
+      'Hi, this is Cristian. I built AskBibleAnswers on my own, to help people find what the Bible says about the questions they carry.\n\n' +
+      'This is the last email in this series. If the app helped you, I\u2019d love to hear how. If it didn\u2019t, I\u2019d be even more grateful to know why. Just hit reply; I read every message.\n\n' +
+      'God bless,\nCristian',
+      unsub)
+  })
+};
+// ---------------------------------------------------------------------------
+
 async function sb(path, options = {}) {
   const res = await fetch(SUPABASE_URL + '/rest/v1/' + path, {
     ...options,
@@ -190,94 +363,122 @@ async function sb(path, options = {}) {
   return t ? JSON.parse(t) : null;
 }
 
+// Email 1: "Yesterday you asked" (unchanged behaviour)
+async function sendFirstEmails() {
+  const since = new Date(Date.now() - 48 * 3600 * 1000).toISOString();
+  const until = new Date(Date.now() - 0 * 3600 * 1000).toISOString();
+
+  const msgs = await sb(
+    'chat_messages?select=user_id,content,created_at&role=eq.user' +
+    '&created_at=gte.' + since + '&created_at=lte.' + until +
+    '&order=created_at.desc&limit=200'
+  );
+
+  const firstByUser = new Map();
+  for (const m of msgs) if (!firstByUser.has(m.user_id)) firstByUser.set(m.user_id, m.content);
+  if (firstByUser.size === 0) return 0;
+
+  const ids = [...firstByUser.keys()];
+  const sent = await sb('reminder_log?select=user_id&user_id=in.(' + ids.join(',') + ')');
+  for (const r of sent) firstByUser.delete(r.user_id);
+  if (firstByUser.size === 0) return 0;
+
+  let count = 0;
+  for (const [userId, question] of firstByUser) {
+    const users = await sb('profiles?select=email,daily_email,unsubscribe_token&id=eq.' + userId);
+    if (!users?.[0]?.daily_email) continue;
+
+    const email = users?.[0]?.email;
+    if (!email) continue;
+    const unsubUrl = 'https://askbibleanswers.com/api/unsubscribe?token=' + users[0].unsubscribe_token;
+
+    const raw = String(question).replace(/\s+/g, ' ').trim();
+    const q = raw.length > 120 ? raw.slice(0, 120).trim() + '\u2026' : raw;
+    const verse = pickVerse(raw);
+    const askUrl = askLink(raw);
+
+    const ok = await sendEmail(email, unsubUrl, {
+      subject: 'More on "' + q.replace(/"/g, '\u201d') + '"',
+      text: wrapText(
+        'Yesterday you asked: "' + q + '"\n\n' +
+        'Scripture has more to say on it:\n\n' +
+        verseText(verse) + '\n\n' +
+        'Ask a follow-up question: ' + askUrl,
+        unsubUrl),
+      html: wrapHtml(
+        '<p style="margin:0 0 16px">Yesterday you asked:<br><strong>&ldquo;' + esc(q) + '&rdquo;</strong></p>' +
+        '<p style="margin:0 0 12px">Scripture has more to say on it:</p>' +
+        verseHtml(verse) +
+        button(askUrl, 'Ask a follow-up question'),
+        unsubUrl)
+    });
+    if (!ok) continue;
+
+    await sb('reminder_log', {
+      method: 'POST',
+      headers: { Prefer: 'resolution=merge-duplicates' },
+      body: JSON.stringify({ user_id: userId, step: 1 })
+    });
+    count++;
+  }
+  return count;
+}
+
+// Emails 2-6: the follow-up sequence
+async function sendSequenceEmails() {
+  // At most one email per person per day.
+  const cutoff = new Date(Date.now() - 20 * 3600 * 1000).toISOString();
+  const logs = await sb('reminder_log?select=user_id,step,sent_at&step=lt.6&sent_at=lt.' + cutoff + '&limit=500');
+  if (!logs || logs.length === 0) return 0;
+
+  const profs = await sb(
+    'profiles?select=id,email,daily_email,unsubscribe_token,subscription_status,created_at' +
+    '&id=in.(' + logs.map((l) => l.user_id).join(',') + ')'
+  );
+  const byId = new Map((profs || []).map((p) => [p.id, p]));
+
+  let count = 0;
+  for (const log of logs) {
+    const prof = byId.get(log.user_id);
+    if (!prof || !prof.email || !prof.daily_email || !prof.created_at) continue;
+
+    // Already paying: stop the sequence, send nothing.
+    if (PAYING.includes(prof.subscription_status)) {
+      await sb('reminder_log?user_id=eq.' + log.user_id, {
+        method: 'PATCH',
+        body: JSON.stringify({ step: 6 })
+      });
+      continue;
+    }
+
+    const ageDays = (Date.now() - new Date(prof.created_at).getTime()) / 86400000;
+    // Accounts older than the sequence (old test accounts etc.) get nothing.
+    if (ageDays > 31) continue;
+    const target = targetStep(ageDays);
+    if (target <= log.step) continue;
+
+    const unsubUrl = 'https://askbibleanswers.com/api/unsubscribe?token=' + prof.unsubscribe_token;
+    const ok = await sendEmail(prof.email, unsubUrl, SEQUENCE[target](unsubUrl));
+    if (!ok) continue;
+
+    await sb('reminder_log?user_id=eq.' + log.user_id, {
+      method: 'PATCH',
+      body: JSON.stringify({ step: target, sent_at: new Date().toISOString() })
+    });
+    count++;
+  }
+  return count;
+}
+
 export default async function handler(req, res) {
   if (req.headers.authorization !== 'Bearer ' + process.env.CRON_SECRET) {
     return res.status(401).json({ error: 'unauthorized' });
   }
 
   try {
-    const since = new Date(Date.now() - 48 * 3600 * 1000).toISOString();
-    const until = new Date(Date.now() - 0 * 3600 * 1000).toISOString();
-
-    const msgs = await sb(
-      'chat_messages?select=user_id,content,created_at&role=eq.user' +
-      '&created_at=gte.' + since + '&created_at=lte.' + until +
-      '&order=created_at.desc&limit=200'
-    );
-
-    const firstByUser = new Map();
-    for (const m of msgs) if (!firstByUser.has(m.user_id)) firstByUser.set(m.user_id, m.content);
-    if (firstByUser.size === 0) return res.status(200).json({ sent: 0, reason: 'no candidates' });
-
-    const ids = [...firstByUser.keys()];
-    const sent = await sb('reminder_log?select=user_id&user_id=in.(' + ids.join(',') + ')');
-    for (const r of sent) firstByUser.delete(r.user_id);
-    if (firstByUser.size === 0) return res.status(200).json({ sent: 0, reason: 'all already sent' });
-
-    let count = 0;
-    for (const [userId, question] of firstByUser) {
-      const users = await sb('profiles?select=email,daily_email,unsubscribe_token&id=eq.' + userId);
-      if (!users?.[0]?.daily_email) continue;
-
-      const email = users?.[0]?.email;
-      const unsubUrl = 'https://askbibleanswers.com/api/unsubscribe?token=' + users[0].unsubscribe_token;
-
-      if (!email) continue;
-
-      const raw = String(question).replace(/\s+/g, ' ').trim();
-      const q = raw.length > 120 ? raw.slice(0, 120).trim() + '\u2026' : raw;
-      const verse = pickVerse(raw);       const askUrl = 'https://askbibleanswers.com/?q=' + encodeURIComponent(raw);
-
-      const r = await fetch('https://api.resend.com/emails', {
-        method: 'POST',
-        headers: {
-          Authorization: 'Bearer ' + RESEND_KEY,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          from: 'Cristian from AskBibleAnswers <hello@askbibleanswers.com>',
-          reply_to: 'cristimaxinmihai@yahoo.com',
-          to: email,
-          subject: 'More on "' + q.replace(/"/g, '\u201d') + '"',
-
-          text:
-            'Yesterday you asked: "' + q + '"\n\n' +
-            'Scripture has more to say on it:\n\n' +
-            '"' + verse.text + '"\n' +
-            '\u2014 ' + verse.ref + ' (KJV)\n\n' +
-            'Ask a follow-up question: ' + askUrl + '\n\n' +
-            'AskBibleAnswers, Wheeling IL\n' +
-            'Unsubscribe: ' + unsubUrl,
-
-          html:
-            '<div style="font-family:-apple-system,Segoe UI,Helvetica,Arial,sans-serif;font-size:16px;line-height:1.55;color:#222;max-width:540px">' +
-              '<p style="margin:0 0 16px">Yesterday you asked:<br><strong>&ldquo;' + esc(q) + '&rdquo;</strong></p>' +
-              '<p style="margin:0 0 12px">Scripture has more to say on it:</p>' +
-              '<blockquote style="margin:0 0 20px;padding:14px 18px;border-left:3px solid #c9b896;background:#faf7f1">' +
-                esc(verse.text) +
-                '<br><span style="font-size:13px;color:#777">&mdash; ' + esc(verse.ref) + ' (KJV)</span>' +
-              '</blockquote>' +
-              '<p style="margin:0 0 28px">' +
-                '<a href="' + askUrl + '" style="display:inline-block;padding:12px 22px;background:#1a1a1a;color:#fff;text-decoration:none;border-radius:6px;font-weight:600">Ask a follow-up question</a>' +
-              '</p>' +
-              '<p style="margin:0;font-size:12px;color:#888">AskBibleAnswers, Wheeling IL</p>' +
-              '<p style="margin:4px 0 0;font-size:12px;color:#888"><a href="' + unsubUrl + '" style="color:#888">Unsubscribe</a></p>' +
-            '</div>',
-
-          headers: { 'List-Unsubscribe': '<' + unsubUrl + '>' }
-        })
-      });
-      if (!r.ok) continue;
-
-      await sb('reminder_log', {
-        method: 'POST',
-        headers: { Prefer: 'resolution=merge-duplicates' },
-        body: JSON.stringify({ user_id: userId })
-      });
-      count++;
-    }
-
-    return res.status(200).json({ sent: count });
+    const first = await sendFirstEmails();
+    const sequence = await sendSequenceEmails();
+    return res.status(200).json({ sent: first, sequence });
   } catch (e) {
     return res.status(500).json({ error: e.message });
   }
