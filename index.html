@@ -510,7 +510,7 @@ body {
                 </label>
 
          
-            <button class="auth-submit" id="authSubmitBtn" onclick="handleAuthSubmit()">Create account</button>
+            <p style="margin:4px 0 12px;font-size:13.5px;text-align:right;"><a href="#" onclick="sendPasswordReset(); return false;" style="color:#2563eb;">Forgot password?</a></p><button class="auth-submit" id="authSubmitBtn" onclick="handleAuthSubmit()">Create account</button>
 
             <p class="auth-switch" id="authSwitch"></p>
         </div>
@@ -1699,7 +1699,7 @@ if (!clientId) { clientId = (crypto.randomUUID ? crypto.randomUUID() : String(Da
             }
         }
 
-        // ---- INIT ----
+        async function sendPasswordReset() { const email = (document.getElementById('authEmail').value || '').trim(); if (!email) { setAuthMessage('Enter your email above, then tap "Forgot password?" again.', 'error'); return; } const { error } = await sb.auth.resetPasswordForEmail(email, { redirectTo: 'https://askbibleanswers.com/' }); if (error) { setAuthMessage(error.message, 'error'); } else { setAuthMessage('Check your email for a link to reset your password.', 'success'); } } async function handlePasswordRecovery() { const pw = window.prompt('Enter your new password (at least 6 characters):'); if (!pw) return; if (pw.length < 6) { alert('Password must be at least 6 characters.'); return; } const { error } = await sb.auth.updateUser({ password: pw }); alert(error ? 'Could not update password: ' + error.message : 'Your password has been updated.'); } // ---- INIT ----
         renderFooter();
         renderFaqs(faqsData);
         renderPrayers(prayersData);
@@ -1710,7 +1710,7 @@ if (!clientId) { clientId = (crypto.randomUUID ? crypto.randomUUID() : String(Da
         // Restore an existing session on load, then follow sign in / sign out.
         // updateAuthUI also refreshes the account state from the server.
         sb.auth.getSession().then(({ data }) => updateAuthUI(data.session));
-        sb.auth.onAuthStateChange((_event, session) => updateAuthUI(session));
+        sb.auth.onAuthStateChange((_event, session) => { updateAuthUI(session); if (_event === 'PASSWORD_RECOVERY') { setTimeout(handlePasswordRecovery, 300); } });
 
         // Back from Stripe: the webhook may take a moment to mark the profile,
         // so check a few times instead of trusting the URL.
