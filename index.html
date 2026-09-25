@@ -1450,7 +1450,7 @@ if (!clientId) { clientId = (crypto.randomUUID ? crypto.randomUUID() : String(Da
         msg = document.createElement('div');
         msg.id = 'appTrialOverMsg';
         msg.style.cssText = 'background:#fff;border:1px solid var(--border-color);border-radius:14px;padding:30px 24px;margin-bottom:50px;text-align:center;';
-        msg.innerHTML = '<h3 style="margin:0 0 8px;font-size:22px;">Thanks for trying AskBibleAnswers</h3><p style="color:var(--text-secondary);font-size:14.5px;margin:0;">Your free trial has ended. You can still browse Bible verses, lessons and answers below.</p>';
+        msg.innerHTML = '<h3 style="margin:0 0 8px;font-size:22px;">Thanks for trying AskBibleAnswers</h3><p style="color:var(--text-secondary);font-size:14.5px;margin:0;">Your free trial has ended. You can still browse Bible verses, lessons and answers below.</p><p style="margin:16px 0 0;font-size:14.5px;"><a href="https://askbibleanswers.com" target="_blank" style="color:#2563eb;text-decoration:underline;">Manage your account at askbibleanswers.com</a></p>';
         chatBox.parentNode.insertBefore(msg, chatBox.nextSibling);
       }
       return;
