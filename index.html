@@ -1451,7 +1451,7 @@ if (!clientId) { clientId = (crypto.randomUUID ? crypto.randomUUID() : String(Da
         msg.id = 'appTrialOverMsg';
         msg.style.cssText = 'background:#fff;border:1px solid var(--border-color);border-radius:14px;padding:30px 24px;margin-bottom:50px;text-align:center;';
         msg.innerHTML = '<h3 style="margin:0 0 8px;font-size:22px;">Thanks for trying AskBibleAnswers</h3><p style="color:var(--text-secondary);font-size:14.5px;margin:0;">Your free trial has ended. You can still browse Bible verses, lessons and answers below.</p><p style="margin:16px 0 0;font-size:14.5px;"><a href="https://askbibleanswers.com" target="_blank" style="color:#2563eb;text-decoration:underline;">Manage your account at askbibleanswers.com</a></p>';
-        chatBox.parentNode.insertBefore(msg, chatBox.nextSibling);
+        chatBox.parentNode.insertBefore(msg, chatBox.nextSibling); setTimeout(function () { msg.scrollIntoView({ behavior: 'smooth', block: 'center' }); }, 150);
       }
       return;
     }
@@ -1797,7 +1797,7 @@ if (!clientId) { clientId = (crypto.randomUUID ? crypto.randomUUID() : String(Da
             try { answersSoFar = parseInt(localStorage.getItem(INSTALL_ANSWERS_KEY) || '0', 10) || 0; } catch (err) {}
             if (answersSoFar < INSTALL_MIN_ANSWERS) return;
             const env = installEnvironment();
-            if (env === 'none') return;
+            if (env === 'none' || window.Capacitor) return;
             if (env === 'android' && !deferredInstallPrompt) return;
 
             const banner = document.getElementById('installBanner');
