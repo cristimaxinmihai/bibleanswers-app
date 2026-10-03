@@ -13,15 +13,16 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  const { messages, clientId } = req.body;
+  const { messages, clientId, platform } = req.body;
 
   if (!messages || !Array.isArray(messages)) {
     return res.status(400).json({ error: 'Invalid messages' });
   }
   const SUPABASE_URL = 'https://zacllsdldntmcgttudod.supabase.co';
   const SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
-  // Free accounts: 5 questions in the first 24 hours, then 1 a day for good.
-  const FIRST_DAY_LIMIT = 5;
+  // Free accounts: first 24 hours = 2 questions on the website, 5 in the iOS app
+  // (older app builds don't send `platform`, so they keep 5), then 1 a day for good.
+  const FIRST_DAY_LIMIT = platform === 'web' ? 2 : 5;
   const FREE_DAILY_LIMIT = 1;
   const ANON_DAILY_LIMIT = 3;
   const ANON_IP_DAILY_LIMIT = 40;

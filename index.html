@@ -664,7 +664,7 @@ body {
             loaded: false,
             subscribed: false,
             questionsUsedToday: 0,
-            dailyLimit: 5,
+            dailyLimit: window.Capacitor ? 5 : 2,
             trialDaysElapsed: 0,
             trialOver: false,
         };
@@ -1338,8 +1338,9 @@ body {
         // ---- AI CHAT (calls our secure backend, never exposes any API key) ----
         // These two numbers must match the ones in api/ask.js. The server enforces
         // them; the copies here only decide what the page says.
-        // Free accounts: 5 questions in the first 24 hours, then 1 a day for good.
-        const FIRST_DAY_LIMIT = 5;
+        // Free accounts: first 24 hours = 2 questions on the website, 5 in the iOS app,
+        // then 1 a day for good.
+        const FIRST_DAY_LIMIT = window.Capacitor ? 5 : 2;
         const FREE_DAILY_LIMIT = 1;
         // How many past messages travel with each question (8 exchanges).
         const HISTORY_LIMIT = 16;
@@ -1653,7 +1654,7 @@ if (!clientId) { clientId = (crypto.randomUUID ? crypto.randomUUID() : String(Da
                         ...(accessToken ? { 'Authorization': 'Bearer ' + accessToken } : {}),
                     },
                     // Only the recent history travels, so a long session stays cheap.
-                    body: JSON.stringify({ messages: aiConversation.slice(-HISTORY_LIMIT) , clientId: clientId }),
+                    body: JSON.stringify({ messages: aiConversation.slice(-HISTORY_LIMIT) , clientId: clientId, platform: window.Capacitor ? 'ios' : 'web' }),
                 });
                 const data = await response.json();
                 document.getElementById(loadingId)?.remove();
@@ -1665,7 +1666,7 @@ if (!clientId) { clientId = (crypto.randomUUID ? crypto.randomUUID() : String(Da
                     if (response.status === 401) {
                                                 if (!window.authPromptShown) { appendAiMessage('assistant', currentUser ? 'Please sign in again to continue.' : 'Create a free account to keep asking - it takes a few seconds.'); window.authPromptShown = true; }
 
-                        if (currentUser) { openAuthModal('signin'); } else { openAuthModal('signup'); setAuthMessage('Create a free account and get 5 more questions today.', 'success'); }
+                        if (currentUser) { openAuthModal('signin'); } else { openAuthModal('signup'); setAuthMessage('Create a free account and get ' + FIRST_DAY_LIMIT + ' more questions today.', 'success'); }
                     } else if (response.status === 402) {
                         appendAiMessage('assistant', 'Your free trial has ended. Subscribe to keep asking questions.');
                         accountState.trialOver = true;
