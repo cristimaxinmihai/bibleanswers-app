@@ -302,13 +302,13 @@ const SEQUENCE = {
     subject: 'Ask as many questions as you like',
     html: wrapHtml(
       p('Your AskBibleAnswers account gives you 1 free question every day, and you can read Bible verses, prayers and lessons for free, anytime.') +
-      p('If you\u2019d like unlimited questions, plans start at <strong>$4.99 a week</strong>, or <strong>$89 a year</strong>. You can manage your account at askbibleanswers.com.') +
-      button(SITE, 'See plans'),
+      p('If you\u2019d like unlimited questions, try it free for 7 days, then <strong>$12 a month</strong> or <strong>$89 a year</strong>. Cancel anytime. You can manage your account at askbibleanswers.com.') +
+      button(SITE, 'Start your free trial'),
       unsub),
     text: wrapText(
       'Your AskBibleAnswers account gives you 1 free question every day, and you can read Bible verses, prayers and lessons for free, anytime.\n\n' +
-      'If you\u2019d like unlimited questions, plans start at $4.99 a week, or $89 a year. You can manage your account at askbibleanswers.com.\n\n' +
-      'See plans: ' + SITE,
+      'If you\u2019d like unlimited questions, try it free for 7 days, then $12 a month or $89 a year. Cancel anytime. You can manage your account at askbibleanswers.com.\n\n' +
+      'Start your free trial: ' + SITE,
       unsub)
   }),
 
