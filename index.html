@@ -1665,7 +1665,9 @@ if (!clientId) { clientId = (crypto.randomUUID ? crypto.randomUUID() : String(Da
                         updateUsageDisplay();
                         showTrialOverPaywall(true);
                     } else if (response.status === 429) {
-                        appendAiMessage('assistant', 'You have used your free questions for today. Start a free trial below for unlimited questions.');
+                        appendAiMessage('assistant', window.Capacitor
+                            ? 'You have used your free questions for today. Come back tomorrow for another free question.'
+                            : 'You have used your free questions for today. Start a free trial below for unlimited questions.');
                         accountState.questionsUsedToday = accountState.dailyLimit;
                         updateUsageDisplay();
                         showDailyLimitPlans(true);
