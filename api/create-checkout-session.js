@@ -13,6 +13,28 @@ const PRICE_IDS = {
     yearly: 'price_1U7chfJc0oLZr7dsuUL35ety',
 };
 
+// Perioada de probă gratuită (card cerut, prima plată după 7 zile).
+// Doar la monthly/yearly și doar pentru cine n-a mai avut niciodată abonament.
+const TRIAL_DAYS = 7;
+const TRIAL_PLANS = ['monthly', 'yearly'];
+const SUPABASE_URL = 'https://zacllsdldntmcgttudod.supabase.co';
+
+async function hadSubscriptionBefore(userId) {
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (!key || !/^[0-9a-f-]{36}$/i.test(userId)) return true; // la dubiu, fără probă
+  try {
+    const r = await fetch(
+      SUPABASE_URL + '/rest/v1/profiles?id=eq.' + userId + '&select=stripe_customer_id',
+      { headers: { apikey: key, Authorization: 'Bearer ' + key } }
+    );
+    const rows = await r.json();
+    const row = Array.isArray(rows) ? rows[0] : null;
+    return !row || !!row.stripe_customer_id;
+  } catch (e) {
+    return true;
+  }
+}
+
 module.exports = async (req, res) => {
 res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
@@ -61,6 +83,10 @@ res.setHeader('Access-Control-Allow-Origin', '*');
     params.append('subscription_data[metadata][supabase_user_id]', userId);
     if (email) {
       params.append('customer_email', email);
+    }
+
+    if (TRIAL_PLANS.includes(plan) && !(await hadSubscriptionBefore(userId))) {
+      params.append('subscription_data[trial_period_days]', String(TRIAL_DAYS));
     }
 
     const response = await fetch('https://api.stripe.com/v1/checkout/sessions', {

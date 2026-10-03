@@ -549,29 +549,19 @@ body {
             <h3 id="paywallTitle" style="margin:0 0 8px;font-size:22px;">Your free trial has ended</h3>
             <p id="paywallSubtitle" style="color:var(--text-secondary);font-size:14.5px;margin:0 0 24px;">Subscribe to keep asking AskBibleAnswers AI unlimited questions, every day.</p>
 
-            <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:12px;margin-bottom:18px;">
-                <div style="border:1px solid var(--border-color);border-radius:12px;padding:16px 10px;">
-                    <div style="font-size:13px;color:var(--text-secondary);margin-bottom:4px;">Weekly</div>
-                    <div style="font-size:20px;font-weight:700;">$4.99</div>
-                    <div style="font-size:12px;color:var(--text-secondary);">/ week</div>
-                    <button onclick="handleSubscribe('weekly')" style="margin-top:10px;width:100%;background:#f2f4f8;color:#111;border:none;border-radius:20px;padding:8px 0;font-size:13px;font-weight:600;cursor:pointer;">Choose</button>
-                </div>
-                <div style="border:1px solid var(--border-color);border-radius:12px;padding:16px 10px;">
-                    <div style="font-size:13px;color:var(--text-secondary);margin-bottom:4px;">Monthly</div>
-                    <div style="font-size:20px;font-weight:700;">$12</div>
-                    <div style="font-size:12px;color:var(--text-secondary);">/ month</div>
-                    <button onclick="handleSubscribe('monthly')" style="margin-top:10px;width:100%;background:#f2f4f8;color:#111;border:none;border-radius:20px;padding:8px 0;font-size:13px;font-weight:600;cursor:pointer;">Choose</button>
-                </div>
-                <div style="border:2px solid var(--accent-color);border-radius:12px;padding:26px 10px 16px;position:relative;">
-                    <div style="position:absolute;top:-10px;left:50%;transform:translateX(-50%);background:var(--accent-color);color:#fff;font-size:10px;font-weight:700;padding:2px 10px;border-radius:10px;">BEST VALUE</div>
-                    <div style="font-size:13px;color:var(--text-secondary);margin-bottom:4px;">Yearly</div>
-                    <div style="font-size:20px;font-weight:700;">$89</div>
-                    <div style="font-size:12px;color:var(--text-secondary);">/ year</div>
-                    <button onclick="handleSubscribe('yearly')" style="margin-top:10px;width:100%;background:var(--accent-color);color:#fff;border:none;border-radius:20px;padding:8px 0;font-size:13px;font-weight:600;cursor:pointer;">Choose</button>
-                </div>
+            <div style="display:flex;flex-direction:column;gap:12px;max-width:340px;margin:0 auto 14px;">
+                <button onclick="handleSubscribe('monthly')" style="width:100%;background:var(--accent-color);color:#fff;border:none;border-radius:14px;padding:14px 12px;cursor:pointer;">
+                    <div style="font-size:16px;font-weight:700;">Start 7-day free trial</div>
+                    <div style="font-size:13px;opacity:.9;margin-top:2px;">then $12 / month</div>
+                </button>
+                <button onclick="handleSubscribe('yearly')" style="width:100%;background:#fff;color:#111;border:1.5px solid var(--border-color);border-radius:14px;padding:12px;cursor:pointer;">
+                    <div style="font-size:15px;font-weight:600;">Yearly — $89 / year</div>
+                    <div style="font-size:12.5px;color:var(--text-secondary);margin-top:2px;">≈ $7.42/mo · save 38% · 7 days free</div>
+                </button>
             </div>
-
-            </div>
+            <p style="font-size:12.5px;color:var(--text-secondary);margin:0 0 14px;">No charge today · Cancel anytime · Secure checkout by Stripe</p>
+            <p id="paywallFreeNote" style="font-size:13px;color:var(--text-secondary);margin:0;">Not now? You still get 1 free question every day.</p>
+        </div>
 
         <div class="section-title">Explore Topics</div>
         <div class="topics-grid">
@@ -1435,9 +1425,13 @@ if (!clientId) { clientId = (crypto.randomUUID ? crypto.randomUUID() : String(Da
             const paywallBox = document.getElementById('paywallBox');
             if (!paywallBox) return;
             document.getElementById('paywallIcon').textContent = '📖';
-            document.getElementById('paywallTitle').textContent = 'You have used your free questions for today';
-            document.getElementById('paywallSubtitle').textContent = 'Come back tomorrow, or subscribe for unlimited questions every day.';
+            document.getElementById('paywallTitle').textContent = 'Keep asking — unlimited answers from Scripture';
+            document.getElementById('paywallSubtitle').textContent = 'Ask as many questions as you want, every day. Try it free for 7 days.';
             paywallBox.style.display = 'block';
+            // The plans get the whole screen: no install banner on top of them.
+            const ib = document.getElementById('installBanner');
+            if (ib) ib.classList.remove('show');
+            document.body.classList.remove('install-banner-open');
             if (shouldScroll) {
                 paywallBox.scrollIntoView({ behavior: 'smooth', block: 'center' });
             }
@@ -1671,7 +1665,7 @@ if (!clientId) { clientId = (crypto.randomUUID ? crypto.randomUUID() : String(Da
                         updateUsageDisplay();
                         showTrialOverPaywall(true);
                     } else if (response.status === 429) {
-                        appendAiMessage('assistant', 'You have used your free questions for today.');
+                        appendAiMessage('assistant', 'You have used your free questions for today. Start a free trial below for unlimited questions.');
                         accountState.questionsUsedToday = accountState.dailyLimit;
                         updateUsageDisplay();
                         showDailyLimitPlans(true);
