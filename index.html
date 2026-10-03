@@ -1668,6 +1668,14 @@ if (!clientId) { clientId = (crypto.randomUUID ? crypto.randomUUID() : String(Da
                         appendAiMessage('assistant', window.Capacitor
                             ? 'You have used your free questions for today. Come back tomorrow for another free question.'
                             : 'You have used your free questions for today. Start a free trial below for unlimited questions.');
+                        // In the app: same discreet link Apple approved in 1.1, no prices.
+                        if (window.Capacitor && !document.getElementById('appAccountLink')) {
+                            const link = document.createElement('p');
+                            link.id = 'appAccountLink';
+                            link.style.cssText = 'margin:0 0 10px;font-size:14px;';
+                            link.innerHTML = '<a href="https://askbibleanswers.com" target="_blank" style="color:#2563eb;text-decoration:underline;">Manage your account at askbibleanswers.com</a>';
+                            document.getElementById('aiMessages').appendChild(link);
+                        }
                         accountState.questionsUsedToday = accountState.dailyLimit;
                         updateUsageDisplay();
                         showDailyLimitPlans(true);
