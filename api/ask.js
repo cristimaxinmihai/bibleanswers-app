@@ -20,8 +20,9 @@ export default async function handler(req, res) {
   }
   const SUPABASE_URL = 'https://zacllsdldntmcgttudod.supabase.co';
   const SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
-  const DAILY_LIMIT = 5;
-  const TRIAL_DAYS = 7;
+  // Free accounts: 5 questions in the first 24 hours, then 1 a day for good.
+  const FIRST_DAY_LIMIT = 5;
+  const FREE_DAILY_LIMIT = 1;
   const ANON_DAILY_LIMIT = 3;
   const ANON_IP_DAILY_LIMIT = 40;
 
@@ -107,11 +108,9 @@ export default async function handler(req, res) {
 
   if (!subscribed && !isAnon) {
     const ageDays = (Date.now() - new Date(profile.created_at).getTime()) / 86400000;
-    if (ageDays >= TRIAL_DAYS) {
-      return res.status(402).json({ error: 'trial_over' });
-    }
-    if (used >= DAILY_LIMIT) {
-      return res.status(429).json({ error: 'daily_limit', limit: DAILY_LIMIT });
+    const limit = ageDays < 1 ? FIRST_DAY_LIMIT : FREE_DAILY_LIMIT;
+    if (used >= limit) {
+      return res.status(429).json({ error: 'daily_limit', limit: limit });
     }
   }
   try {

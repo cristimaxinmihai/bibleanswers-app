@@ -282,32 +282,32 @@ const SEQUENCE = {
     };
   },
 
-  // Day 6 - honest heads-up that the free week is ending
+  // Day 6 - reminder that a free question is waiting every day
   3: (unsub) => ({
-    subject: 'Your free week is almost over',
+    subject: 'Your free question for today is waiting',
     html: wrapHtml(
-      p('Just a heads-up: your 7-day free trial of AskBibleAnswers ends in about a day.') +
-      p('Until then you still have 5 questions a day. Is there something on your heart you\u2019ve been meaning to ask?') +
+      p('Just a reminder: your AskBibleAnswers account includes 1 free question every day.') +
+      p('Is there something on your heart you\u2019ve been meaning to ask?') +
       button(SITE, 'Ask a question now'),
       unsub),
     text: wrapText(
-      'Just a heads-up: your 7-day free trial of AskBibleAnswers ends in about a day.\n\n' +
-      'Until then you still have 5 questions a day. Is there something on your heart you\u2019ve been meaning to ask?\n\n' +
+      'Just a reminder: your AskBibleAnswers account includes 1 free question every day.\n\n' +
+      'Is there something on your heart you\u2019ve been meaning to ask?\n\n' +
       'Ask a question now: ' + SITE,
       unsub)
   }),
 
-  // Day 8 - trial ended, plans on the website
+  // Day 8 - free question every day, plans for unlimited
   4: (unsub) => ({
-    subject: 'Your free trial has ended',
+    subject: 'Ask as many questions as you like',
     html: wrapHtml(
-      p('Your free trial of AskBibleAnswers has ended. You can still read Bible verses, prayers and lessons for free, anytime.') +
-      p('If you\u2019d like to keep asking questions, plans start at <strong>$4.99 a week</strong>, or <strong>$89 a year</strong>. You can manage your account at askbibleanswers.com.') +
+      p('Your AskBibleAnswers account gives you 1 free question every day, and you can read Bible verses, prayers and lessons for free, anytime.') +
+      p('If you\u2019d like unlimited questions, plans start at <strong>$4.99 a week</strong>, or <strong>$89 a year</strong>. You can manage your account at askbibleanswers.com.') +
       button(SITE, 'See plans'),
       unsub),
     text: wrapText(
-      'Your free trial of AskBibleAnswers has ended. You can still read Bible verses, prayers and lessons for free, anytime.\n\n' +
-      'If you\u2019d like to keep asking questions, plans start at $4.99 a week, or $89 a year. You can manage your account at askbibleanswers.com.\n\n' +
+      'Your AskBibleAnswers account gives you 1 free question every day, and you can read Bible verses, prayers and lessons for free, anytime.\n\n' +
+      'If you\u2019d like unlimited questions, plans start at $4.99 a week, or $89 a year. You can manage your account at askbibleanswers.com.\n\n' +
       'See plans: ' + SITE,
       unsub)
   }),

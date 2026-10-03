@@ -670,6 +670,7 @@ body {
             loaded: false,
             subscribed: false,
             questionsUsedToday: 0,
+            dailyLimit: 5,
             trialDaysElapsed: 0,
             trialOver: false,
         };
@@ -700,14 +701,17 @@ body {
                 const subscribed = data.subscription_status === 'active' || data.subscription_status === 'trialing';
                 const used = data.questions_day === todayUtc() ? (data.questions_used_today || 0) : 0;
                 const started = data.created_at ? new Date(data.created_at) : new Date();
-                const daysElapsed = Math.floor((Date.now() - started.getTime()) / 86400000);
+                const ageDays = (Date.now() - started.getTime()) / 86400000;
+                const daysElapsed = Math.floor(ageDays);
 
                 accountState = {
                     loaded: true,
                     subscribed: subscribed,
                     questionsUsedToday: used,
+                    dailyLimit: ageDays < 1 ? FIRST_DAY_LIMIT : FREE_DAILY_LIMIT,
                     trialDaysElapsed: daysElapsed,
-                    trialOver: !subscribed && daysElapsed >= TRIAL_DAYS,
+                    // No hard end any more: after day one the account keeps 1 free question a day.
+                    trialOver: false,
                 };
             } catch (err) {
                 accountState = Object.assign({}, emptyAccountState);
@@ -1337,8 +1341,9 @@ body {
         // ---- AI CHAT (calls our secure backend, never exposes any API key) ----
         // These two numbers must match the ones in api/ask.js. The server enforces
         // them; the copies here only decide what the page says.
-        const DAILY_LIMIT = 5;
-        const TRIAL_DAYS = 7;
+        // Free accounts: 5 questions in the first 24 hours, then 1 a day for good.
+        const FIRST_DAY_LIMIT = 5;
+        const FREE_DAILY_LIMIT = 1;
         // How many past messages travel with each question (8 exchanges).
         const HISTORY_LIMIT = 16;
         let aiConversation = []; let pendingQuestion = null;let clientId = localStorage.getItem('baClientId');
@@ -1418,7 +1423,7 @@ if (!clientId) { clientId = (crypto.randomUUID ? crypto.randomUUID() : String(Da
             chatBox.style.display = 'block';
             // Still inside the trial, but out of free questions for today:
             // keep the chat visible and show the plans underneath it.
-            if (accountState.questionsUsedToday >= DAILY_LIMIT) {
+            if (accountState.questionsUsedToday >= accountState.dailyLimit) {
                 showDailyLimitPlans(false);
             } else {
                 paywallBox.style.display = 'none';
@@ -1515,8 +1520,8 @@ if (!clientId) { clientId = (crypto.randomUUID ? crypto.randomUUID() : String(Da
                 el.textContent = 'Your free trial has ended';
                 return;
             }
-            const remaining = Math.max(0, DAILY_LIMIT - accountState.questionsUsedToday);
-            el.textContent = `${remaining}/${DAILY_LIMIT} free questions left today`;
+            const remaining = Math.max(0, accountState.dailyLimit - accountState.questionsUsedToday);
+            el.textContent = `${remaining}/${accountState.dailyLimit} free questions left today`;
         }
 
                 async function clearAiChat() {
@@ -1589,7 +1594,7 @@ if (!clientId) { clientId = (crypto.randomUUID ? crypto.randomUUID() : String(Da
             if (!el) return;
             // No point offering a question the account cannot ask right now.
             if (currentUser && !accountState.subscribed &&
-                (accountState.trialOver || accountState.questionsUsedToday >= DAILY_LIMIT)) return;
+                (accountState.trialOver || accountState.questionsUsedToday >= accountState.dailyLimit)) return;
             // Drop anything already asked in this conversation, then take three.
             const asked = aiConversation
                 .filter(function (m) { return m.role === 'user'; })
@@ -1659,15 +1664,15 @@ if (!clientId) { clientId = (crypto.randomUUID ? crypto.randomUUID() : String(Da
                     if (response.status === 401) {
                                                 if (!window.authPromptShown) { appendAiMessage('assistant', currentUser ? 'Please sign in again to continue.' : 'Create a free account to keep asking - it takes a few seconds.'); window.authPromptShown = true; }
 
-                        if (currentUser) { openAuthModal('signin'); } else { openAuthModal('signup'); setAuthMessage('Create a free account and get 5 questions per day for 7 days.', 'success'); }
+                        if (currentUser) { openAuthModal('signin'); } else { openAuthModal('signup'); setAuthMessage('Create a free account and get 5 more questions today.', 'success'); }
                     } else if (response.status === 402) {
                         appendAiMessage('assistant', 'Your free trial has ended. Subscribe to keep asking questions.');
                         accountState.trialOver = true;
                         updateUsageDisplay();
                         showTrialOverPaywall(true);
                     } else if (response.status === 429) {
-                        appendAiMessage('assistant', `You have used all ${DAILY_LIMIT} free questions for today. Please come back tomorrow.`);
-                        accountState.questionsUsedToday = DAILY_LIMIT;
+                        appendAiMessage('assistant', 'You have used your free questions for today.');
+                        accountState.questionsUsedToday = accountState.dailyLimit;
                         updateUsageDisplay();
                         showDailyLimitPlans(true);
                     } else {
@@ -1688,7 +1693,7 @@ if (!clientId) { clientId = (crypto.randomUUID ? crypto.randomUUID() : String(Da
                 updateUsageDisplay();
 
                 // Out of free questions after this answer: surface the plans.
-                if (!accountState.subscribed && accountState.questionsUsedToday >= DAILY_LIMIT) {
+                if (!accountState.subscribed && accountState.questionsUsedToday >= accountState.dailyLimit) {
                     showDailyLimitPlans(false);
                 }
 
